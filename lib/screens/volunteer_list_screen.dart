@@ -2,49 +2,44 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../models/partner.dart';
-import '../models/partner_query.dart';
+import '../models/simple_list_query.dart';
+import '../models/volunteer.dart';
 import '../routing/query_params.dart';
-import '../state/partner_list_notifier.dart';
+import '../state/simple_entity_notifiers.dart';
 import '../widgets/async_list_body.dart';
 import '../widgets/debounced_search_field.dart';
 import '../widgets/delete_dialogs.dart';
 import '../widgets/entity_table.dart';
 import '../widgets/pagination_bar.dart';
 
-class PartnerListScreen extends StatefulWidget {
-  const PartnerListScreen({super.key});
+class VolunteerListScreen extends StatefulWidget {
+  const VolunteerListScreen({super.key});
 
   @override
-  State<PartnerListScreen> createState() => _PartnerListScreenState();
+  State<VolunteerListScreen> createState() => _VolunteerListScreenState();
 }
 
-class _PartnerListScreenState extends State<PartnerListScreen> {
-  void _pushQuery(PartnerQuery q) {
+class _VolunteerListScreenState extends State<VolunteerListScreen> {
+  void _pushQuery(SimpleListQuery q) {
     final uri = Uri(
-      path: '/partners',
-      queryParameters: partnerQueryToParams(q),
+      path: '/volunteers',
+      queryParameters: simpleListQueryToParams(q),
     );
     context.go(uri.toString());
   }
 
   @override
   Widget build(BuildContext context) {
-    final notifier = context.watch<PartnerListNotifier>();
+    final notifier = context.watch<VolunteerListNotifier>();
     final q = notifier.query;
     final useCards = MediaQuery.sizeOf(context).width < 600;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Партнёры фонда'),
+        title: const Text('Волонтёры'),
         actions: [
           if (notifier.hasSelection)
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: Center(
-                child: Text('Выбрано: ${notifier.selected.length}'),
-              ),
-            ),
+            Center(child: Text('Выбрано: ${notifier.selected.length}  ')),
           if (notifier.hasSelection)
             IconButton(
               icon: const Icon(Icons.delete_sweep),
@@ -61,10 +56,8 @@ class _PartnerListScreenState extends State<PartnerListScreen> {
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () async {
-              await context.push('/partners/new');
-              if (context.mounted) {
-                await context.read<PartnerListNotifier>().load();
-              }
+              await context.push('/volunteers/new');
+              if (context.mounted) await notifier.load();
             },
           ),
         ],
@@ -72,14 +65,12 @@ class _PartnerListScreenState extends State<PartnerListScreen> {
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             DebouncedSearchField(
               initialValue: q.search,
-              hint: 'Фамилия / название или страна',
-              onChanged: (text) => _pushQuery(q.copyWith(search: text)),
+              hint: 'Фамилия или email',
+              onChanged: (t) => _pushQuery(q.copyWith(search: t)),
             ),
-            const SizedBox(height: 12),
             SwitchListTile(
               title: const Text('Показывать удалённые'),
               value: q.includeDeleted,
@@ -92,59 +83,69 @@ class _PartnerListScreenState extends State<PartnerListScreen> {
                 isEmpty: notifier.result.items.isEmpty,
                 onRetry: notifier.load,
                 child: useCards
-                    ? _PartnerCardList(
-                        partners: notifier.result.items,
-                        selected: notifier.selected,
-                        onToggle: notifier.toggleSelection,
-                        onOpen: (p) => context.go('/partners/${p.id}'),
+                    ? ListView.builder(
+                        itemCount: notifier.result.items.length,
+                        itemBuilder: (context, i) {
+                          final v = notifier.result.items[i];
+                          return Card(
+                            child: ListTile(
+                              leading: Checkbox(
+                                value: notifier.selected.contains(v.id),
+                                onChanged: (_) =>
+                                    notifier.toggleSelection(v.id),
+                              ),
+                              title: Text(v.displayName),
+                              subtitle: Text(v.email),
+                              onTap: () => context.go('/volunteers/${v.id}'),
+                            ),
+                          );
+                        },
                       )
-                    : EntityTable<Partner>(
+                    : EntityTable<Volunteer>(
                         items: notifier.result.items,
-                        idOf: (p) => p.id,
+                        idOf: (v) => v.id,
                         selected: notifier.selected,
                         onToggleSelect: notifier.toggleSelection,
                         sortField: q.sortField,
                         sortAscending: q.sortAscending,
-                        onSort: (field) => _pushQuery(
+                        onSort: (f) => _pushQuery(
                           q.copyWith(
-                            sortField: field,
-                            sortAscending: field == q.sortField
-                                ? !q.sortAscending
-                                : true,
+                            sortField: f,
+                            sortAscending:
+                                f == q.sortField ? !q.sortAscending : true,
                           ),
                         ),
                         columns: [
                           TableColumnSpec(
-                            label: 'Название',
+                            label: 'Фамилия',
                             sortField: 'lastName',
-                            build: (p) => Text(p.displayName),
+                            build: (v) => Text(v.displayName),
                           ),
                           TableColumnSpec(
-                            label: 'Страна',
-                            sortField: 'country',
-                            build: (p) => Text(p.country),
+                            label: 'Email',
+                            sortField: 'email',
+                            build: (v) => Text(v.email),
                           ),
                           TableColumnSpec(
-                            label: 'Год осн.',
-                            sortField: 'birthYear',
-                            numeric: true,
-                            build: (p) => Text('${p.birthYear}'),
+                            label: 'Билет',
+                            build: (v) => Text(v.card.cardNumber),
                           ),
                         ],
-                        actions: (p) => [
+                        actions: (v) => [
                           IconButton(
                             icon: const Icon(Icons.edit),
-                            onPressed: () => context.push('/partners/${p.id}/edit'),
+                            onPressed: () =>
+                                context.push('/volunteers/${v.id}/edit'),
                           ),
                           IconButton(
                             icon: const Icon(Icons.visibility),
-                            onPressed: () => context.go('/partners/${p.id}'),
+                            onPressed: () => context.go('/volunteers/${v.id}'),
                           ),
-                          if (p.isDeleted)
+                          if (v.isDeleted)
                             IconButton(
                               icon: const Icon(Icons.restore),
                               onPressed: () async {
-                                await notifier.restoreOne(p.id);
+                                await notifier.restoreOne(v.id);
                                 _pushQuery(notifier.query);
                               },
                             )
@@ -154,9 +155,9 @@ class _PartnerListScreenState extends State<PartnerListScreen> {
                               onPressed: () async {
                                 if (await confirmSoftDelete(
                                   context,
-                                  p.displayName,
+                                  v.displayName,
                                 )) {
-                                  await notifier.softDeleteOne(p.id);
+                                  await notifier.softDeleteOne(v.id);
                                   _pushQuery(notifier.query);
                                 }
                               },
@@ -167,47 +168,12 @@ class _PartnerListScreenState extends State<PartnerListScreen> {
             ),
             PaginationBar(
               result: notifier.result,
-              onPage: (page) => _pushQuery(q.copyWith(page: page)),
-              onSize: (size) => _pushQuery(q.copyWith(size: size)),
+              onPage: (p) => _pushQuery(q.copyWith(page: p)),
+              onSize: (s) => _pushQuery(q.copyWith(size: s)),
             ),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _PartnerCardList extends StatelessWidget {
-  const _PartnerCardList({
-    required this.partners,
-    required this.selected,
-    required this.onToggle,
-    required this.onOpen,
-  });
-
-  final List<Partner> partners;
-  final Set<int> selected;
-  final ValueChanged<int> onToggle;
-  final ValueChanged<Partner> onOpen;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.builder(
-      itemCount: partners.length,
-      itemBuilder: (context, i) {
-        final p = partners[i];
-        return Card(
-          child: ListTile(
-            leading: Checkbox(
-              value: selected.contains(p.id),
-              onChanged: (_) => onToggle(p.id),
-            ),
-            title: Text(p.displayName),
-            subtitle: Text('${p.country} · ${p.birthYear}'),
-            onTap: () => onOpen(p),
-          ),
-        );
-      },
     );
   }
 }

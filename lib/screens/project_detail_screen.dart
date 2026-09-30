@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../data/reference_data.dart';
 import '../models/project.dart';
+import '../repositories/category_repository.dart';
 import '../repositories/project_repository.dart';
+import '../repositories/tag_repository.dart';
 import '../widgets/delete_dialogs.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
@@ -18,6 +19,8 @@ class ProjectDetailScreen extends StatefulWidget {
 
 class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   Project? _project;
+  String _categoryName = '—';
+  List<String> _tagNames = [];
   bool _loading = true;
   String? _error;
 
@@ -35,12 +38,21 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     try {
       final repo = context.read<ProjectRepository>();
       _project = await repo.findById(widget.projectId);
+      if (_project != null) {
+        final cat = await context
+            .read<CategoryRepository>()
+            .findById(_project!.categoryId);
+        _categoryName = cat?.name ?? '—';
+        final allTags = await context.read<TagRepository>().listForSelect();
+        _tagNames = allTags
+            .where((t) => _project!.tagIds.contains(t.id))
+            .map((t) => t.name)
+            .toList();
+      }
     } catch (e) {
       _error = '$e';
     }
-    if (mounted) {
-      setState(() => _loading = false);
-    }
+    if (mounted) setState(() => _loading = false);
   }
 
   @override
@@ -82,6 +94,15 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit),
+            onPressed: () async {
+              await context.push('/projects/${p.id}/edit');
+              if (mounted) await _load();
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(24),
@@ -91,10 +112,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             Text('Код: ${p.code}', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             Text('Год запуска: ${p.year}'),
-            Text('Направление: ${categoryName(p.categoryId)}'),
+            Text('Направление: $_categoryName'),
             Text('Цель сбора: ${p.goalAmount} ₽'),
             Text('Волонтёры: ${p.volunteersActive} / ${p.volunteersTotal}'),
-            Text('Теги: ${p.tagIds.map(tagName).join(', ')}'),
+            Text('Теги: ${_tagNames.join(', ')}'),
             if (p.isDeleted)
               Padding(
                 padding: const EdgeInsets.only(top: 8),

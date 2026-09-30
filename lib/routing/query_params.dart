@@ -1,5 +1,6 @@
 import '../models/partner_query.dart';
 import '../models/project_query.dart';
+import '../models/simple_list_query.dart';
 
 ProjectQuery projectQueryFromUri(Map<String, String> params) {
   final sortRaw = params['sort'];
@@ -71,4 +72,38 @@ Map<String, String> partnerQueryToParams(PartnerQuery q) {
 int? _parseInt(String? value) {
   if (value == null || value.isEmpty) return null;
   return int.tryParse(value);
+}
+
+SimpleListQuery simpleListQueryFromUri(
+  Map<String, String> params, {
+  String defaultSortField = 'name',
+}) {
+  final sortRaw = params['sort'];
+  var sortField = defaultSortField;
+  var sortAscending = true;
+  if (sortRaw != null && sortRaw.contains(',')) {
+    final parts = sortRaw.split(',');
+    sortField = parts[0];
+    sortAscending = parts.length < 2 || parts[1] != 'desc';
+  }
+  return SimpleListQuery(
+    search: params['search'] ?? '',
+    categoryId: _parseInt(params['categoryId'] ?? params['publisherId']),
+    sortField: sortField,
+    sortAscending: sortAscending,
+    page: _parseInt(params['page']) ?? 1,
+    size: _parseInt(params['size']) ?? 10,
+    includeDeleted: params['includeDeleted'] == 'true',
+  );
+}
+
+Map<String, String> simpleListQueryToParams(SimpleListQuery q) {
+  return {
+    if (q.search.isNotEmpty) 'search': q.search,
+    if (q.categoryId != null) 'categoryId': '${q.categoryId}',
+    'sort': q.sortAscending ? '${q.sortField},asc' : '${q.sortField},desc',
+    'page': '${q.page}',
+    'size': '${q.size}',
+    if (q.includeDeleted) 'includeDeleted': 'true',
+  };
 }

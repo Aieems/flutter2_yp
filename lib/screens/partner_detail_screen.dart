@@ -81,6 +81,12 @@ class _PartnerDetailScreenState extends State<PartnerDetailScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit),
+            onPressed: () => context.push('/partners/${p.id}/edit'),
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(24),

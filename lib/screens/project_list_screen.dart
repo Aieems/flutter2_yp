@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../data/reference_data.dart';
+import '../models/fund_category.dart';
+import '../models/fund_tag.dart';
 import '../models/project.dart';
+import '../repositories/category_repository.dart';
+import '../repositories/tag_repository.dart';
 import '../models/project_query.dart';
 import '../routing/query_params.dart';
 import '../state/project_list_notifier.dart';
@@ -22,6 +25,29 @@ class ProjectListScreen extends StatefulWidget {
 
 class _ProjectListScreenState extends State<ProjectListScreen> {
   bool _filtersExpanded = false;
+  List<FundCategory> _filterCategories = [];
+  List<FundTag> _filterTags = [];
+  bool _refsLoaded = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_refsLoaded) {
+      _refsLoaded = true;
+      _loadFilterRefs();
+    }
+  }
+
+  Future<void> _loadFilterRefs() async {
+    final cats = await context.read<CategoryRepository>().listForSelect();
+    final tags = await context.read<TagRepository>().listForSelect();
+    if (mounted) {
+      setState(() {
+        _filterCategories = cats;
+        _filterTags = tags;
+      });
+    }
+  }
 
   void _pushQuery(ProjectQuery q) {
     final uri = Uri(
@@ -63,6 +89,16 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                 }
               },
             ),
+          IconButton(
+            icon: const Icon(Icons.add),
+            tooltip: 'Новый проект',
+            onPressed: () async {
+              await context.push('/projects/new');
+              if (context.mounted) {
+                await context.read<ProjectListNotifier>().load();
+              }
+            },
+          ),
         ],
       ),
       body: Padding(
@@ -110,7 +146,7 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                                   value: null,
                                   child: Text('Все'),
                                 ),
-                                ...tags.map(
+                                ..._filterTags.map(
                                   (t) => DropdownMenuItem(
                                     value: t.id,
                                     child: Text(
@@ -139,7 +175,7 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                                   value: null,
                                   child: Text('Все'),
                                 ),
-                                ...categories.map(
+                                ..._filterCategories.map(
                                   (c) => DropdownMenuItem(
                                     value: c.id,
                                     child: Text(
@@ -259,6 +295,10 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                           ),
                         ],
                         actions: (p) => [
+                          IconButton(
+                            icon: const Icon(Icons.edit),
+                            onPressed: () => context.push('/projects/${p.id}/edit'),
+                          ),
                           IconButton(
                             icon: const Icon(Icons.visibility),
                             onPressed: () => context.go('/projects/${p.id}'),

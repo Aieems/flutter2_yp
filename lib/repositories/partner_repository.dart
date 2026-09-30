@@ -11,4 +11,5 @@ abstract interface class PartnerRepository {
   Future<void> hardDelete(int id);
   Future<void> restore(int id);
   Future<int> deleteMany(List<int> ids);
+  Future<List<Partner>> listForSelect({int? categoryId});
 }

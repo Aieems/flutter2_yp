@@ -1,17 +1,19 @@
-class Partner {
+import 'volunteer_card.dart';
+
+class Volunteer {
   final int id;
-  final String lastName;
   final String firstName;
-  final String country;
-  final int birthYear;
+  final String lastName;
+  final String email;
+  final VolunteerCard card;
   final DateTime? deletedAt;
 
-  const Partner({
+  const Volunteer({
     required this.id,
-    required this.lastName,
     required this.firstName,
-    required this.country,
-    required this.birthYear,
+    required this.lastName,
+    required this.email,
+    required this.card,
     this.deletedAt,
   });
 
@@ -19,39 +21,41 @@ class Partner {
 
   String get displayName => '$lastName $firstName'.trim();
 
-  Partner copyWith({
-    String? lastName,
+  Volunteer copyWith({
     String? firstName,
-    String? country,
-    int? birthYear,
+    String? lastName,
+    String? email,
+    VolunteerCard? card,
     DateTime? deletedAt,
     bool clearDeletedAt = false,
   }) {
-    return Partner(
+    return Volunteer(
       id: id,
-      lastName: lastName ?? this.lastName,
       firstName: firstName ?? this.firstName,
-      country: country ?? this.country,
-      birthYear: birthYear ?? this.birthYear,
+      lastName: lastName ?? this.lastName,
+      email: email ?? this.email,
+      card: card ?? this.card,
       deletedAt: clearDeletedAt ? null : (deletedAt ?? this.deletedAt),
     );
   }
 
   Map<String, dynamic> toJson() => {
         'id': id,
-        'lastName': lastName,
         'firstName': firstName,
-        'country': country,
-        'birthYear': birthYear,
+        'lastName': lastName,
+        'email': email,
+        'card': card.toJson(),
         'deletedAt': deletedAt?.toIso8601String(),
       };
 
-  factory Partner.fromJson(Map<String, dynamic> json) => Partner(
+  factory Volunteer.fromJson(Map<String, dynamic> json) => Volunteer(
         id: json['id'] as int? ?? 0,
-        lastName: json['lastName'] as String? ?? '',
         firstName: json['firstName'] as String? ?? '',
-        country: json['country'] as String? ?? '',
-        birthYear: json['birthYear'] as int? ?? 0,
+        lastName: json['lastName'] as String? ?? '',
+        email: json['email'] as String? ?? '',
+        card: VolunteerCard.fromJson(
+          (json['card'] as Map?)?.cast<String, dynamic>() ?? const {},
+        ),
         deletedAt: json['deletedAt'] == null
             ? null
             : DateTime.tryParse(json['deletedAt'] as String),
