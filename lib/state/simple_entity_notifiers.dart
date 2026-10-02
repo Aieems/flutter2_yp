@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../core/api_exceptions.dart';
 import '../models/fund_category.dart';
 import '../models/fund_tag.dart';
 import '../models/page_result.dart';
@@ -36,7 +37,7 @@ class CategoryListNotifier extends ChangeNotifier {
       _result = await _repository.find(_query);
       _status = LoadStatus.success;
     } catch (e) {
-      _error = '$e';
+      _error = e is ApiException ? e.message : '$e';
       _status = LoadStatus.error;
     }
     notifyListeners();
@@ -105,7 +106,7 @@ class TagListNotifier extends ChangeNotifier {
       _result = await _repository.find(_query);
       _status = LoadStatus.success;
     } catch (e) {
-      _error = '$e';
+      _error = e is ApiException ? e.message : '$e';
       _status = LoadStatus.error;
     }
     notifyListeners();
@@ -174,7 +175,7 @@ class VolunteerListNotifier extends ChangeNotifier {
       _result = await _repository.find(_query);
       _status = LoadStatus.success;
     } catch (e) {
-      _error = '$e';
+      _error = e is ApiException ? e.message : '$e';
       _status = LoadStatus.error;
     }
     notifyListeners();

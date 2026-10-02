@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 import '../data/seed_projects.dart';
 import '../utils/text_normalize.dart';
 import '../models/page_result.dart';
@@ -10,7 +12,10 @@ class InMemoryProjectRepository implements ProjectRepository {
   int _nextId = seedProjects.length + 1;
 
   @override
-  Future<PageResult<Project>> find(ProjectQuery q) async {
+  Future<PageResult<Project>> find(
+    ProjectQuery q, {
+    CancelToken? cancelToken,
+  }) async {
     await Future.delayed(const Duration(milliseconds: 250));
     var rows =
         _projects.where((p) => q.includeDeleted || !p.isDeleted).toList();

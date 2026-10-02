@@ -1,5 +1,7 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
+import '../core/api_exceptions.dart';
 import '../models/page_result.dart';
 import '../models/project.dart';
 import '../models/project_query.dart';
@@ -16,6 +18,7 @@ class ProjectListNotifier extends ChangeNotifier {
   LoadStatus _status = LoadStatus.idle;
   String? _error;
   final Set<int> _selected = {};
+  CancelToken? _loadToken;
 
   ProjectQuery get query => _query;
   PageResult<Project> get result => _result;
@@ -25,14 +28,22 @@ class ProjectListNotifier extends ChangeNotifier {
   bool get hasSelection => _selected.isNotEmpty;
 
   Future<void> load() async {
+    _loadToken?.cancel('новый запрос');
+    final token = CancelToken();
+    _loadToken = token;
+
     _status = LoadStatus.loading;
     _error = null;
     notifyListeners();
     try {
-      _result = await _repository.find(_query);
+      _result = await _repository.find(_query, cancelToken: token);
+      if (token.isCancelled) return;
       _status = LoadStatus.success;
     } catch (e) {
-      _error = 'Не удалось загрузить список: $e';
+      if (isCancelledError(e) || token.isCancelled) return;
+      _error = e is ApiException
+          ? e.message
+          : 'Не удалось загрузить список: $e';
       _status = LoadStatus.error;
     }
     notifyListeners();

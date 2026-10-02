@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/api_exceptions.dart';
 import '../repositories/category_repository.dart';
 
 Future<void> tryDeleteCategory(
@@ -9,17 +10,16 @@ Future<void> tryDeleteCategory(
   required String categoryName,
   required Future<void> Function() onSuccess,
 }) async {
-  final linked = await repository.countLinkedProjects(categoryId);
-  if (linked > 0) {
+  try {
+    await repository.softDelete(categoryId);
+    await onSuccess();
+  } on ConflictException catch (e) {
     if (!context.mounted) return;
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Удаление невозможно'),
-        content: Text(
-          'Издательство (направление) «$categoryName» нельзя удалить: '
-          'с ним связано проектов (книг): $linked.',
-        ),
+        content: Text(e.message),
         actions: [
           FilledButton(
             onPressed: () => Navigator.pop(ctx),
@@ -28,16 +28,30 @@ Future<void> tryDeleteCategory(
         ],
       ),
     );
-    return;
-  }
-
-  try {
-    await repository.softDelete(categoryId);
-    await onSuccess();
+  } on StateError catch (e) {
+    if (!context.mounted) return;
+    if (e.message.contains('привязано') ||
+        e.message.contains('Нельзя удалить')) {
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Удаление невозможно'),
+          content: Text(e.message),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Понятно'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+    rethrow;
   } catch (e) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$e')),
+        SnackBar(content: Text(e is ApiException ? e.message : '$e')),
       );
     }
   }

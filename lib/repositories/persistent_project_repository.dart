@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/seed_projects.dart';
@@ -43,7 +44,10 @@ class PersistentProjectRepository implements ProjectRepository {
   }
 
   @override
-  Future<PageResult<Project>> find(ProjectQuery q) async {
+  Future<PageResult<Project>> find(
+    ProjectQuery q, {
+    CancelToken? cancelToken,
+  }) async {
     await Future.delayed(const Duration(milliseconds: 250));
     var rows = _items.where((p) => q.includeDeleted || !p.isDeleted).toList();
     if (q.search.trim() == '!!!error') {

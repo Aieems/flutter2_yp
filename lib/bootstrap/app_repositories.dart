@@ -1,5 +1,11 @@
+import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../repositories/api/api_category_repository.dart';
+import '../repositories/api/api_partner_repository.dart';
+import '../repositories/api/api_project_repository.dart';
+import '../repositories/api/api_tag_repository.dart';
+import '../repositories/api/api_volunteer_repository.dart';
 import '../repositories/category_repository.dart';
 import '../repositories/partner_repository.dart';
 import '../repositories/persistent_category_repository.dart';
@@ -52,6 +58,22 @@ class AppRepositories {
       prefs,
       onStorageReset: onStorageReset,
     );
+    return AppRepositories(
+      projects: projects,
+      partners: partners,
+      categories: categories,
+      tags: tags,
+      volunteers: volunteers,
+    );
+  }
+
+  /// Репозитории ПР4 — только HTTP, без SharedPreferences.
+  factory AppRepositories.createApi(Dio dio) {
+    final projects = ApiProjectRepository(dio);
+    final partners = ApiPartnerRepository(dio, projects);
+    final categories = ApiCategoryRepository(dio, projects);
+    final tags = ApiTagRepository(dio);
+    final volunteers = ApiVolunteerRepository(dio);
     return AppRepositories(
       projects: projects,
       partners: partners,

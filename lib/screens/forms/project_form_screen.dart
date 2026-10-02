@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/api_exceptions.dart';
 import '../../models/fund_category.dart';
 import '../../models/fund_tag.dart';
 import '../../models/partner.dart';
@@ -136,16 +137,6 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
     final repo = context.read<ProjectRepository>();
     final code = _codeCtrl.text.trim();
 
-    final existing = await repo.findByCode(code);
-    final isDuplicate = existing != null &&
-        (!widget.isEditing || existing.id != widget.id);
-    if (isDuplicate) {
-      _notifyIsbnDuplicate(
-        'ISBN (код проекта) «$code» уже используется («${existing.title}»)',
-      );
-      return;
-    }
-
     final project = Project(
       id: widget.id ?? 0,
       title: _titleCtrl.text.trim(),
@@ -165,6 +156,21 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
       } else {
         await repo.create(project);
       }
+      if (!mounted) return;
+      setState(() => _dirty = false);
+      context.pop();
+    } on ValidationException catch (e) {
+      final isbnMsg = e.errors['code'] ?? e.errors['isbn'];
+      if (isbnMsg != null) {
+        _notifyIsbnDuplicate(isbnMsg);
+      } else {
+        _showSnackBar(e.message);
+      }
+      _formKey.currentState?.validate();
+    } on ConflictException catch (e) {
+      _showSnackBar(e.message);
+    } on ApiException catch (e) {
+      _showSnackBar(e.message);
     } on StateError catch (e) {
       if (e.message.contains('ISBN') || e.message.contains('код проекта')) {
         _notifyIsbnDuplicate(e.message);
@@ -172,11 +178,13 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
       }
       rethrow;
     }
+  }
 
-    if (mounted) {
-      setState(() => _dirty = false);
-      context.pop();
-    }
+  void _showSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   void _showIsbnError(String message) {

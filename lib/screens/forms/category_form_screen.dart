@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/api_exceptions.dart';
+import '../../core/api_exceptions.dart';
 import '../../models/fund_category.dart';
 import '../../repositories/category_repository.dart';
 import '../../validation/form_validators.dart';
@@ -67,13 +69,6 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
     final repo = context.read<CategoryRepository>();
     final name = _nameCtrl.text.trim();
 
-    final existing = await repo.findByName(name);
-    if (existing != null &&
-        (!widget.isEditing || existing.id != widget.id)) {
-      _showNameError('Направление «$name» уже существует');
-      return;
-    }
-
     final item = FundCategory(id: widget.id ?? 0, name: name);
     try {
       if (widget.isEditing) {
@@ -81,17 +76,27 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
       } else {
         await repo.create(item);
       }
+      if (mounted) {
+        setState(() => _dirty = false);
+        context.pop();
+      }
+    } on ValidationException catch (e) {
+      final nameMsg = e.errors['name'];
+      if (nameMsg != null) {
+        _showNameError(nameMsg);
+      } else {
+        _showNameError(e.message);
+      }
+    } on ConflictException catch (e) {
+      _showNameError(e.message);
+    } on ApiException catch (e) {
+      _showNameError(e.message);
     } on StateError catch (e) {
       if (e.message.contains('уже существует')) {
         _showNameError(e.message);
         return;
       }
       rethrow;
-    }
-
-    if (mounted) {
-      setState(() => _dirty = false);
-      context.pop();
     }
   }
 

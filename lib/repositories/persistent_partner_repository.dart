@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/seed_partners.dart';
@@ -36,7 +37,10 @@ class PersistentPartnerRepository implements PartnerRepository {
   Future<void> _save() => _storage.persist(_items);
 
   @override
-  Future<PageResult<Partner>> find(PartnerQuery q) async {
+  Future<PageResult<Partner>> find(
+    PartnerQuery q, {
+    CancelToken? cancelToken,
+  }) async {
     await Future.delayed(const Duration(milliseconds: 250));
     var rows = _items.where((p) => q.includeDeleted || !p.isDeleted).toList();
     if (q.search.trim().isNotEmpty) {

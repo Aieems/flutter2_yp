@@ -1,9 +1,14 @@
+import 'package:dio/dio.dart';
+
 import '../models/page_result.dart';
 import '../models/project.dart';
 import '../models/project_query.dart';
 
 abstract interface class ProjectRepository {
-  Future<PageResult<Project>> find(ProjectQuery query);
+  Future<PageResult<Project>> find(
+    ProjectQuery query, {
+    CancelToken? cancelToken,
+  });
   Future<Project?> findById(int id);
   Future<Project?> findByCode(String code);
   Future<Project> create(Project project);

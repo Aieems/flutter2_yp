@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/api_exceptions.dart';
 import '../../models/volunteer.dart';
 import '../../models/volunteer_card.dart';
 import '../../repositories/volunteer_repository.dart';
@@ -123,12 +124,24 @@ class _VolunteerFormScreenState extends State<VolunteerFormScreen> {
       } else {
         await repo.create(volunteer);
       }
+    } on ValidationException catch (e) {
+      final emailMsg = e.errors['email'];
+      setState(() => _emailServerError = emailMsg ?? e.message);
+      _formKey.currentState?.validate();
+      return;
+    } on ConflictException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    } on ApiException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      }
+      return;
     } on StateError catch (e) {
       if (e.message.contains('Email')) {
         setState(() => _emailServerError = e.message);
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _formKey.currentState?.validate();
-        });
+        _formKey.currentState?.validate();
         return;
       }
       rethrow;

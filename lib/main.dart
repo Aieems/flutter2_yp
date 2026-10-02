@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:provider/provider.dart';
@@ -5,6 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app.dart';
 import 'bootstrap/app_repositories.dart';
+import 'core/api_client.dart';
+import 'core/config.dart';
 import 'repositories/category_repository.dart';
 import 'repositories/partner_repository.dart';
 import 'repositories/project_repository.dart';
@@ -18,16 +21,26 @@ import 'state/storage_message_notifier.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   usePathUrlStrategy();
-  final prefs = await SharedPreferences.getInstance();
+
   final storageMessages = StorageMessageNotifier();
-  final repos = await AppRepositories.create(
-    prefs,
-    onStorageReset: storageMessages.show,
-  );
+  final AppRepositories repos;
+  Dio? dio;
+
+  if (useApiRepositories) {
+    dio = buildDio();
+    repos = AppRepositories.createApi(dio);
+  } else {
+    final prefs = await SharedPreferences.getInstance();
+    repos = await AppRepositories.create(
+      prefs,
+      onStorageReset: storageMessages.show,
+    );
+  }
 
   runApp(
     MultiProvider(
       providers: [
+        if (dio != null) Provider<Dio>.value(value: dio),
         Provider<ProjectRepository>.value(value: repos.projects),
         Provider<PartnerRepository>.value(value: repos.partners),
         Provider<CategoryRepository>.value(value: repos.categories),
