@@ -40,13 +40,15 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     });
     try {
       final repo = context.read<ProjectRepository>();
+      final categoryRepo = context.read<CategoryRepository>();
+      final tagRepo = context.read<TagRepository>();
       _project = await repo.findById(widget.projectId);
       if (_project != null) {
-        final cat = await context.read<CategoryRepository>().findById(
+        final cat = await categoryRepo.findById(
           _project!.categoryId,
         );
         _categoryName = cat?.name ?? '—';
-        final allTags = await context.read<TagRepository>().listForSelect();
+        final allTags = await tagRepo.listForSelect();
         _tagNames = allTags
             .where((t) => _project!.tagIds.contains(t.id))
             .map((t) => t.name)

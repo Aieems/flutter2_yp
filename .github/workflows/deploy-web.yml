@@ -36,7 +36,7 @@ jobs:
 
       - name: Build release (GitHub Pages subpath)
         run: |
-          flutter build web --release --base-href /flutter_2/ \
+          flutter build web --release --base-href /flutter2_yp/ \
             --dart-define=API_BASE_URL=https://example.com/api
 
       - name: SPA fallback for GitHub Pages

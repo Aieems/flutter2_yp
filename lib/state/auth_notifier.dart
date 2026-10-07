@@ -87,8 +87,9 @@ class AuthNotifier extends ChangeNotifier {
   }
 
   Future<void> login(String username, String password) async {
-    final result = _authApi != null
-        ? await _authApi!.login(username, password)
+    final api = _authApi;
+    final result = api != null
+        ? await api.login(username, password)
         : await _localAuthApi.login(username, password);
     await _applyTokens(result);
   }
@@ -98,8 +99,9 @@ class AuthNotifier extends ChangeNotifier {
     required String password,
     required String displayName,
   }) async {
-    final result = _authApi != null
-        ? await _authApi!.register(
+    final api = _authApi;
+    final result = api != null
+        ? await api.register(
             username: username,
             password: password,
             displayName: displayName,
@@ -165,15 +167,17 @@ class AuthNotifier extends ChangeNotifier {
   }
 
   Future<void> _refreshWith(String refreshToken) async {
-    final result = _authApi != null
-        ? await _authApi!.refresh(refreshToken)
+    final api = _authApi;
+    final result = api != null
+        ? await api.refresh(refreshToken)
         : await _localAuthApi.refresh(refreshToken);
     await _applyTokens(result);
   }
 
   Future<AppUser> _me() async {
-    if (_authApi != null) {
-      return _authApi!.me();
+    final api = _authApi;
+    if (api != null) {
+      return api.me();
     }
     return _localAuthApi.meFromAccessToken(_accessToken);
   }
@@ -197,19 +201,22 @@ class AuthNotifier extends ChangeNotifier {
   AuthApi? get authApi => _authApi;
 
   Future<List<AppUser>> listUsers() async {
-    if (_authApi != null) return _authApi!.listUsers();
+    final api = _authApi;
+    if (api != null) return api.listUsers();
     return _localAuthApi.listUsers();
   }
 
   Future<AppUser> updateUserRole(int id, AppRole role) async {
-    if (_authApi != null) {
-      return _authApi!.updateUserRole(id, role.apiValue);
+    final api = _authApi;
+    if (api != null) {
+      return api.updateUserRole(id, role.apiValue);
     }
     return _localAuthApi.updateUserRole(id, role.apiValue);
   }
 
   Future<Map<String, int>> fetchStats() async {
-    if (_authApi != null) return _authApi!.stats();
+    final api = _authApi;
+    if (api != null) return api.stats();
     return _localAuthApi.stats();
   }
 

@@ -79,6 +79,7 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
   Future<void> _init() async {
     await _loadRelationOptions();
     if (widget.isEditing) {
+      if (!mounted) return;
       final repo = context.read<ProjectRepository>();
       final p = await repo.findById(widget.id!);
       if (p != null && mounted) {
@@ -98,11 +99,15 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
   }
 
   Future<void> _loadRelationOptions() async {
-    _categories = await context.read<CategoryRepository>().listForSelect();
-    _tagOptions = await context.read<TagRepository>().listForSelect(
+    if (!mounted) return;
+    final categoryRepo = context.read<CategoryRepository>();
+    final tagRepo = context.read<TagRepository>();
+    final partnerRepo = context.read<PartnerRepository>();
+    _categories = await categoryRepo.listForSelect();
+    _tagOptions = await tagRepo.listForSelect(
       categoryId: _categoryId,
     );
-    _partnerOptions = await context.read<PartnerRepository>().listForSelect(
+    _partnerOptions = await partnerRepo.listForSelect(
       categoryId: _categoryId,
     );
     _tagIds = _tagIds

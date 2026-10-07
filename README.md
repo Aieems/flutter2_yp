@@ -60,7 +60,7 @@ node mock-server.js --port 8080 --origin http://localhost:5555 --ttl 60
 Адаптив: `lib/core/breakpoints.dart`, `AdaptiveAppShell` (низ &lt;768, rail ≥768, таблицы ≥1280).
 
 ```bash
-flutter build web --release --base-href /flutter_2/
+flutter build web --release --base-href /flutter2_yp/
 cp build/web/index.html build/web/404.html
 flutter build web --release --wasm
 flutter test

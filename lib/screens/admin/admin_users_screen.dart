@@ -43,7 +43,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
           return ListView.separated(
             padding: const EdgeInsets.all(16),
             itemCount: users.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
+            separatorBuilder: (context, index) => const Divider(height: 1),
             itemBuilder: (context, i) {
               final u = users[i];
               return ListTile(

@@ -60,7 +60,8 @@ class EntityTable<T> extends StatelessWidget {
                       return DataColumn(
                         numeric: col.numeric,
                         onSort: col.sortField != null && onSort != null
-                            ? (_, __) => onSort!(col.sortField!)
+                            ? (int columnIndex, bool ascending) =>
+                                onSort!(col.sortField!)
                             : null,
                         label: Row(
                           mainAxisSize: MainAxisSize.min,

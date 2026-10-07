@@ -162,10 +162,12 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
                                 if (!await confirmSoftDelete(context, c.name)) {
                                   return;
                                 }
+                                if (!context.mounted) return;
+                                final categoryRepo =
+                                    context.read<CategoryRepository>();
                                 await tryDeleteCategory(
                                   context,
-                                  repository: context
-                                      .read<CategoryRepository>(),
+                                  repository: categoryRepo,
                                   categoryId: c.id,
                                   categoryName: c.name,
                                   onSuccess: () async {

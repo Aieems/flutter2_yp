@@ -109,6 +109,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                       return FilledButton.icon(
                         onPressed: () async {
                           if (!await confirmSoftDelete(context, c.name)) return;
+                          if (!context.mounted) return;
                           await tryDeleteCategory(
                             context,
                             repository: repo,

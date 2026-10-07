@@ -32,9 +32,10 @@ class _TagDetailScreenState extends State<TagDetailScreen> {
 
   Future<void> _load() async {
     final repo = context.read<TagRepository>();
+    final categoryRepo = context.read<CategoryRepository>();
     _item = await repo.findById(widget.tagId);
     if (_item != null) {
-      final cat = await context.read<CategoryRepository>().findById(
+      final cat = await categoryRepo.findById(
         _item!.categoryId,
       );
       _categoryName = cat?.name ?? '—';

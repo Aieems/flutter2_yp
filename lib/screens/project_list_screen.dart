@@ -43,8 +43,10 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
   }
 
   Future<void> _loadFilterRefs() async {
-    final cats = await context.read<CategoryRepository>().listForSelect();
-    final tags = await context.read<TagRepository>().listForSelect();
+    final categoryRepo = context.read<CategoryRepository>();
+    final tagRepo = context.read<TagRepository>();
+    final cats = await categoryRepo.listForSelect();
+    final tags = await tagRepo.listForSelect();
     if (mounted) {
       setState(() {
         _filterCategories = cats;

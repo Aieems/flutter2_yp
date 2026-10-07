@@ -85,6 +85,7 @@ class _CharityFundAppState extends State<CharityFundApp> {
         warningBefore: const Duration(seconds: 30),
         onActivity: () {
           auth.touchActivity();
+          final router = GoRouter.of(context);
           auth.checkMaxSessionAndLogoutIfNeeded().then((loggedOut) {
             if (loggedOut && mounted) {
               rootScaffoldMessengerKey.currentState?.showSnackBar(
@@ -94,7 +95,7 @@ class _CharityFundAppState extends State<CharityFundApp> {
                   ),
                 ),
               );
-              context.go('/login');
+              router.go('/login');
             }
           });
         },

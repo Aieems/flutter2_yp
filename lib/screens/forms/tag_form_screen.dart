@@ -43,9 +43,12 @@ class _TagFormScreenState extends State<TagFormScreen> {
   }
 
   Future<void> _load() async {
-    _categories = await context.read<CategoryRepository>().listForSelect();
+    final categoryRepo = context.read<CategoryRepository>();
+    _categories = await categoryRepo.listForSelect();
     if (widget.isEditing) {
-      final t = await context.read<TagRepository>().findById(widget.id!);
+      if (!mounted) return;
+      final tagRepo = context.read<TagRepository>();
+      final t = await tagRepo.findById(widget.id!);
       if (t != null && mounted) {
         _nameCtrl.text = t.name;
         _categoryId = t.categoryId;
