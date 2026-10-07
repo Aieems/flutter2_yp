@@ -36,8 +36,9 @@ jobs:
 
       - name: Build release (GitHub Pages subpath)
         run: |
+          # Без публичного бэкенда: данные и вход в браузере (SharedPreferences + LocalAuthApi).
           flutter build web --release --base-href /flutter2_yp/ \
-            --dart-define=API_BASE_URL=https://example.com/api
+            --dart-define=USE_API=false
 
       - name: SPA fallback for GitHub Pages
         run: cp build/web/index.html build/web/404.html

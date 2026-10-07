@@ -68,4 +68,8 @@ flutter analyze
 dart format lib test
 ```
 
-CI: `.github/workflows/deploy-web.yml`. Краткий отчёт: [docs/PR6-otchet-kratko.md](docs/PR6-otchet-kratko.md).
+CI: `.github/workflows/deploy-web.yml` (сборка для Pages с `USE_API=false` — без мок-сервера на вашем ПК). Краткий отчёт: [docs/PR6-otchet-kratko.md](docs/PR6-otchet-kratko.md).
+
+**GitHub Pages** (https://aieems.github.io/flutter2_yp/): вход и данные в браузере. Учётки как в ПР5: `volunteer1` / `VolunteeR1!`, `coord1` / `Coordinat0r!`, `admin` / `Admin123!`.
+
+**Полный REST + мок** — только локально (два терминала, см. ПР4 выше), не через ссылку Pages.
