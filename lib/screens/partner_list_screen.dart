@@ -11,6 +11,9 @@ import '../widgets/debounced_search_field.dart';
 import '../widgets/delete_dialogs.dart';
 import '../widgets/entity_table.dart';
 import '../widgets/pagination_bar.dart';
+import '../models/app_role.dart';
+import '../widgets/entity_action_visibility.dart';
+import '../widgets/role_gate.dart';
 
 class PartnerListScreen extends StatefulWidget {
   const PartnerListScreen({super.key});
@@ -33,19 +36,20 @@ class _PartnerListScreenState extends State<PartnerListScreen> {
     final notifier = context.watch<PartnerListNotifier>();
     final q = notifier.query;
     final useCards = MediaQuery.sizeOf(context).width < 600;
+    final actionVis = EntityActionVisibility.of(context);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Партнёры фонда'),
         actions: [
-          if (notifier.hasSelection)
+          if (actionVis.canManage && notifier.hasSelection)
             Padding(
               padding: const EdgeInsets.only(right: 8),
               child: Center(
                 child: Text('Выбрано: ${notifier.selected.length}'),
               ),
             ),
-          if (notifier.hasSelection)
+          if (actionVis.canManage && notifier.hasSelection)
             IconButton(
               icon: const Icon(Icons.delete_sweep),
               onPressed: () async {
@@ -58,14 +62,17 @@ class _PartnerListScreenState extends State<PartnerListScreen> {
                 }
               },
             ),
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () async {
-              await context.push('/partners/new');
-              if (context.mounted) {
-                await context.read<PartnerListNotifier>().load();
-              }
-            },
+          RoleGate(
+            minRole: AppRole.coordinator,
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () async {
+                await context.push('/partners/new');
+                if (context.mounted) {
+                  await context.read<PartnerListNotifier>().load();
+                }
+              },
+            ),
           ),
         ],
       ),
@@ -95,6 +102,7 @@ class _PartnerListScreenState extends State<PartnerListScreen> {
                     ? _PartnerCardList(
                         partners: notifier.result.items,
                         selected: notifier.selected,
+                        selectionEnabled: actionVis.canManage,
                         onToggle: notifier.toggleSelection,
                         onOpen: (p) => context.go('/partners/${p.id}'),
                       )
@@ -102,7 +110,9 @@ class _PartnerListScreenState extends State<PartnerListScreen> {
                         items: notifier.result.items,
                         idOf: (p) => p.id,
                         selected: notifier.selected,
-                        onToggleSelect: notifier.toggleSelection,
+                        onToggleSelect: actionVis.canManage
+                            ? notifier.toggleSelection
+                            : null,
                         sortField: q.sortField,
                         sortAscending: q.sortAscending,
                         onSort: (field) => _pushQuery(
@@ -132,15 +142,17 @@ class _PartnerListScreenState extends State<PartnerListScreen> {
                           ),
                         ],
                         actions: (p) => [
-                          IconButton(
-                            icon: const Icon(Icons.edit),
-                            onPressed: () => context.push('/partners/${p.id}/edit'),
-                          ),
+                          if (actionVis.canManage)
+                            IconButton(
+                              icon: const Icon(Icons.edit),
+                              onPressed: () =>
+                                  context.push('/partners/${p.id}/edit'),
+                            ),
                           IconButton(
                             icon: const Icon(Icons.visibility),
                             onPressed: () => context.go('/partners/${p.id}'),
                           ),
-                          if (p.isDeleted)
+                          if (actionVis.canAdmin && p.isDeleted)
                             IconButton(
                               icon: const Icon(Icons.restore),
                               onPressed: () async {
@@ -148,7 +160,7 @@ class _PartnerListScreenState extends State<PartnerListScreen> {
                                 _pushQuery(notifier.query);
                               },
                             )
-                          else
+                          else if (actionVis.canManage && !p.isDeleted)
                             IconButton(
                               icon: const Icon(Icons.delete_outline),
                               onPressed: () async {
@@ -181,12 +193,14 @@ class _PartnerCardList extends StatelessWidget {
   const _PartnerCardList({
     required this.partners,
     required this.selected,
+    required this.selectionEnabled,
     required this.onToggle,
     required this.onOpen,
   });
 
   final List<Partner> partners;
   final Set<int> selected;
+  final bool selectionEnabled;
   final ValueChanged<int> onToggle;
   final ValueChanged<Partner> onOpen;
 
@@ -198,10 +212,12 @@ class _PartnerCardList extends StatelessWidget {
         final p = partners[i];
         return Card(
           child: ListTile(
-            leading: Checkbox(
-              value: selected.contains(p.id),
-              onChanged: (_) => onToggle(p.id),
-            ),
+            leading: selectionEnabled
+                ? Checkbox(
+                    value: selected.contains(p.id),
+                    onChanged: (_) => onToggle(p.id),
+                  )
+                : null,
             title: Text(p.displayName),
             subtitle: Text('${p.country} · ${p.birthYear}'),
             onTap: () => onOpen(p),

@@ -5,7 +5,10 @@ import 'package:provider/provider.dart';
 import '../models/fund_category.dart';
 import '../repositories/category_repository.dart';
 import '../widgets/category_delete_feedback.dart';
+import '../core/show_api_error.dart';
+import '../models/app_role.dart';
 import '../widgets/delete_dialogs.dart';
+import '../widgets/role_gate.dart';
 
 class CategoryDetailScreen extends StatefulWidget {
   const CategoryDetailScreen({super.key, required this.categoryId});
@@ -51,9 +54,12 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
       appBar: AppBar(
         title: Text(c.name),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () => context.push('/categories/${c.id}/edit'),
+          RoleGate(
+            minRole: AppRole.coordinator,
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () => context.push('/categories/${c.id}/edit'),
+            ),
           ),
         ],
       ),
@@ -80,55 +86,77 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
             Wrap(
               spacing: 8,
               children: [
-                if (c.isDeleted)
-                  FilledButton.icon(
-                    onPressed: () async {
-                      await repo.restore(c.id);
-                      await _load();
-                    },
-                    icon: const Icon(Icons.restore),
-                    label: const Text('Восстановить'),
-                  )
-                else if (_linkedProjects == 0)
-                  FilledButton.icon(
-                    onPressed: () async {
-                      if (!await confirmSoftDelete(context, c.name)) return;
-                      await tryDeleteCategory(
+                RoleGate(
+                  minRole: AppRole.admin,
+                  builder: (context) => c.isDeleted
+                      ? FilledButton.icon(
+                          onPressed: () async {
+                            try {
+                              await repo.restore(c.id);
+                              await _load();
+                            } catch (e) {
+                              if (context.mounted) showApiError(context, e);
+                            }
+                          },
+                          icon: const Icon(Icons.restore),
+                          label: const Text('Восстановить'),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+                RoleGate(
+                  minRole: AppRole.coordinator,
+                  builder: (context) {
+                    if (c.isDeleted) return const SizedBox.shrink();
+                    if (_linkedProjects == 0) {
+                      return FilledButton.icon(
+                        onPressed: () async {
+                          if (!await confirmSoftDelete(context, c.name)) return;
+                          await tryDeleteCategory(
+                            context,
+                            repository: repo,
+                            categoryId: c.id,
+                            categoryName: c.name,
+                            onSuccess: () async {
+                              if (context.mounted) context.pop();
+                            },
+                          );
+                        },
+                        icon: const Icon(Icons.delete_outline),
+                        label: const Text('Логическое удаление'),
+                      );
+                    }
+                    return FilledButton.icon(
+                      onPressed: () => tryDeleteCategory(
                         context,
                         repository: repo,
                         categoryId: c.id,
                         categoryName: c.name,
-                        onSuccess: () async {
-                          if (context.mounted) context.pop();
-                        },
-                      );
-                    },
-                    icon: const Icon(Icons.delete_outline),
-                    label: const Text('Логическое удаление'),
-                  )
-                else
-                  FilledButton.icon(
-                    onPressed: () => tryDeleteCategory(
-                      context,
-                      repository: repo,
-                      categoryId: c.id,
-                      categoryName: c.name,
-                      onSuccess: () async {},
-                    ),
-                    icon: const Icon(Icons.block),
-                    label: Text('Удалить (связей: $_linkedProjects)'),
-                  ),
-                if (_linkedProjects == 0)
-                  OutlinedButton.icon(
-                    onPressed: () async {
-                      if (await confirmHardDelete(context, c.name)) {
-                        await repo.hardDelete(c.id);
-                        if (context.mounted) context.pop();
-                      }
-                    },
-                    icon: const Icon(Icons.delete_forever),
-                    label: const Text('Удалить навсегда'),
-                  ),
+                        onSuccess: () async {},
+                      ),
+                      icon: const Icon(Icons.block),
+                      label: Text('Удалить (связей: $_linkedProjects)'),
+                    );
+                  },
+                ),
+                RoleGate(
+                  minRole: AppRole.admin,
+                  builder: (context) => _linkedProjects == 0
+                      ? OutlinedButton.icon(
+                          onPressed: () async {
+                            if (await confirmHardDelete(context, c.name)) {
+                              try {
+                                await repo.hardDelete(c.id);
+                                if (context.mounted) context.pop();
+                              } catch (e) {
+                                if (context.mounted) showApiError(context, e);
+                              }
+                            }
+                          },
+                          icon: const Icon(Icons.delete_forever),
+                          label: const Text('Удалить навсегда'),
+                        )
+                      : const SizedBox.shrink(),
+                ),
               ],
             ),
           ],

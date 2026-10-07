@@ -1,4 +1,4 @@
-# Клиент благотворительного фонда (ПР2–ПР4)
+# Клиент благотворительного фонда (ПР2–ПР5)
 
 ## ПР4 — REST API
 
@@ -36,4 +36,21 @@ flutter run -d chrome --web-port=5555 --dart-define=USE_API=false
 flutter test test/api_project_repository_test.dart
 ```
 
-Контракт: [api/КОНТРАКТ-API.md](api/КОНТРАКТ-API.md)
+## ПР5 — вход, роли, защита маршрутов
+
+Сервер (JWT-подобные токены, роли на эндпоинтах):
+
+```bash
+cd api
+node mock-server.js --port 8080 --origin http://localhost:5555
+# короткий access-токен для проверки refresh:
+node mock-server.js --port 8080 --origin http://localhost:5555 --ttl 60
+```
+
+Клиент: `/login`, `/register`, redirect в `go_router`, `AuthNotifier` + `shared_preferences`, авто-refresh по 401, неактивность 3 мин (предупреждение за 30 с), макс. сессия 8 ч.
+
+Учётки: `volunteer1` / `VolunteeR1!`, `coord1` / `Coordinat0r!`, `admin` / `Admin123!`.
+
+Отчёт и демо п.17: [docs/PR5-otchet-kratko.md](docs/PR5-otchet-kratko.md).
+
+Тесты: `flutter test test/role_access_test.dart`

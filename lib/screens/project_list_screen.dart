@@ -15,6 +15,9 @@ import '../widgets/debounced_search_field.dart';
 import '../widgets/delete_dialogs.dart';
 import '../widgets/entity_table.dart';
 import '../widgets/pagination_bar.dart';
+import '../models/app_role.dart';
+import '../widgets/entity_action_visibility.dart';
+import '../widgets/role_gate.dart';
 
 class ProjectListScreen extends StatefulWidget {
   const ProjectListScreen({super.key});
@@ -63,19 +66,20 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
     final q = notifier.query;
     final width = MediaQuery.sizeOf(context).width;
     final useCards = width < 600;
+    final actionVis = EntityActionVisibility.of(context);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Проекты фонда'),
         actions: [
-          if (notifier.hasSelection)
+          if (actionVis.canManage && notifier.hasSelection)
             Padding(
               padding: const EdgeInsets.only(right: 8),
               child: Center(
                 child: Text('Выбрано: ${notifier.selected.length}'),
               ),
             ),
-          if (notifier.hasSelection)
+          if (actionVis.canManage && notifier.hasSelection)
             IconButton(
               tooltip: 'Удалить выбранные',
               icon: const Icon(Icons.delete_sweep),
@@ -89,15 +93,18 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                 }
               },
             ),
-          IconButton(
-            icon: const Icon(Icons.add),
-            tooltip: 'Новый проект',
-            onPressed: () async {
-              await context.push('/projects/new');
-              if (context.mounted) {
-                await context.read<ProjectListNotifier>().load();
-              }
-            },
+          RoleGate(
+            minRole: AppRole.coordinator,
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.add),
+              tooltip: 'Новый проект',
+              onPressed: () async {
+                await context.push('/projects/new');
+                if (context.mounted) {
+                  await context.read<ProjectListNotifier>().load();
+                }
+              },
+            ),
           ),
         ],
       ),
@@ -251,20 +258,25 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                     ? _ProjectCardList(
                         projects: notifier.result.items,
                         selected: notifier.selected,
+                        selectionEnabled: actionVis.canManage,
                         onToggle: notifier.toggleSelection,
                         onOpen: (p) => context.go('/projects/${p.id}'),
-                        onDelete: (p) async {
-                          if (await confirmSoftDelete(context, p.title)) {
-                            await notifier.softDeleteOne(p.id);
-                            _pushQuery(notifier.query);
-                          }
-                        },
+                        onDelete: actionVis.canManage
+                            ? (p) async {
+                                if (await confirmSoftDelete(context, p.title)) {
+                                  await notifier.softDeleteOne(p.id);
+                                  _pushQuery(notifier.query);
+                                }
+                              }
+                            : null,
                       )
                     : EntityTable<Project>(
                         items: notifier.result.items,
                         idOf: (p) => p.id,
                         selected: notifier.selected,
-                        onToggleSelect: notifier.toggleSelection,
+                        onToggleSelect: actionVis.canManage
+                            ? notifier.toggleSelection
+                            : null,
                         sortField: q.sortField,
                         sortAscending: q.sortAscending,
                         onSort: (field) => _pushQuery(
@@ -295,15 +307,17 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                           ),
                         ],
                         actions: (p) => [
-                          IconButton(
-                            icon: const Icon(Icons.edit),
-                            onPressed: () => context.push('/projects/${p.id}/edit'),
-                          ),
+                          if (actionVis.canManage)
+                            IconButton(
+                              icon: const Icon(Icons.edit),
+                              onPressed: () =>
+                                  context.push('/projects/${p.id}/edit'),
+                            ),
                           IconButton(
                             icon: const Icon(Icons.visibility),
                             onPressed: () => context.go('/projects/${p.id}'),
                           ),
-                          if (p.isDeleted)
+                          if (actionVis.canAdmin && p.isDeleted)
                             IconButton(
                               tooltip: 'Восстановить',
                               icon: const Icon(Icons.restore),
@@ -312,7 +326,7 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                                 _pushQuery(notifier.query);
                               },
                             )
-                          else
+                          else if (actionVis.canManage && !p.isDeleted)
                             IconButton(
                               icon: const Icon(Icons.delete_outline),
                               onPressed: () async {
@@ -342,16 +356,18 @@ class _ProjectCardList extends StatelessWidget {
   const _ProjectCardList({
     required this.projects,
     required this.selected,
+    required this.selectionEnabled,
     required this.onToggle,
     required this.onOpen,
-    required this.onDelete,
+    this.onDelete,
   });
 
   final List<Project> projects;
   final Set<int> selected;
+  final bool selectionEnabled;
   final ValueChanged<int> onToggle;
   final ValueChanged<Project> onOpen;
-  final ValueChanged<Project> onDelete;
+  final Future<void> Function(Project p)? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -361,10 +377,12 @@ class _ProjectCardList extends StatelessWidget {
         final p = projects[i];
         return Card(
           child: ListTile(
-            leading: Checkbox(
-              value: selected.contains(p.id),
-              onChanged: (_) => onToggle(p.id),
-            ),
+            leading: selectionEnabled
+                ? Checkbox(
+                    value: selected.contains(p.id),
+                    onChanged: (_) => onToggle(p.id),
+                  )
+                : null,
             title: Text(p.title),
             subtitle: Text('${p.code} · ${p.year} · ${p.goalAmount} ₽'),
             trailing: IconButton(
@@ -372,7 +390,8 @@ class _ProjectCardList extends StatelessWidget {
               onPressed: () => onOpen(p),
             ),
             onTap: () => onOpen(p),
-            onLongPress: () => onDelete(p),
+            onLongPress:
+                onDelete != null ? () => onDelete!(p) : null,
           ),
         );
       },

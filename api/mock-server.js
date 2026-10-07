@@ -11,8 +11,65 @@ function arg(name, def) {
 
 const PORT = Number(arg('--port', '8080'));
 const ALLOWED_ORIGIN = arg('--origin', 'http://localhost:5555');
+const ACCESS_TTL_SEC = Number(arg('--ttl', '900'));
+const REFRESH_TTL_SEC = Number(arg('--refresh-ttl', '604800'));
 
-let nextId = { projects: 23, partners: 9, tags: 9, categories: 6, volunteers: 4 };
+let nextId = { projects: 23, partners: 9, tags: 9, categories: 6, volunteers: 4, users: 10 };
+
+const users = [
+  { id: 1, username: 'volunteer1', password: 'VolunteeR1!', role: 'volunteer', displayName: 'Иван Волонтёр' },
+  { id: 2, username: 'coord1', password: 'Coordinat0r!', role: 'coordinator', displayName: 'Мария Координатор' },
+  { id: 3, username: 'admin', password: 'Admin123!', role: 'admin', displayName: 'Администратор' },
+];
+
+function roleLevel(role) {
+  return { volunteer: 1, coordinator: 2, admin: 3 }[role] || 0;
+}
+
+function makeToken(kind, userId, role) {
+  const ttlMs = (kind === 'access' ? ACCESS_TTL_SEC : REFRESH_TTL_SEC) * 1000;
+  const payload = { kind, sub: userId, role, exp: Date.now() + ttlMs };
+  return Buffer.from(JSON.stringify(payload)).toString('base64url');
+}
+
+function parseToken(token) {
+  try {
+    const payload = JSON.parse(Buffer.from(token, 'base64url').toString('utf8'));
+    if (!payload.exp || Date.now() > payload.exp) return null;
+    return payload;
+  } catch (_) {
+    return null;
+  }
+}
+
+function authFromReq(req) {
+  const h = req.headers.authorization || '';
+  if (!h.startsWith('Bearer ')) return null;
+  const payload = parseToken(h.slice(7));
+  if (!payload || payload.kind !== 'access') return null;
+  const user = users.find((u) => u.id === payload.sub);
+  if (!user) return null;
+  return { ...payload, user };
+}
+
+function publicUser(u) {
+  return { id: u.id, username: u.username, displayName: u.displayName, role: u.role };
+}
+
+function requireAuth(auth) {
+  if (!auth) throw { status: 401, body: { message: 'Требуется вход в систему' } };
+}
+
+function requireRole(auth, minRole) {
+  requireAuth(auth);
+  if (roleLevel(auth.role) < roleLevel(minRole)) {
+    throw { status: 403, body: { message: 'Недостаточно прав для этого действия' } };
+  }
+}
+
+function passwordStrong(p) {
+  return p.length >= 8 && /\d/.test(p) && /[!@#$%^&*(),.?":{}|<>_\-+=[\]\\;/`~]/.test(p);
+}
 
 const categories = [
   { id: 1, name: 'Дети и образование', deletedAt: null },
@@ -103,7 +160,7 @@ function send(res, status, body, origin) {
   res.writeHead(status, {
     'Content-Type': 'application/json; charset=utf-8',
     'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+    'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   });
   res.end(json);
@@ -200,11 +257,133 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: true }, origin);
     }
 
+    // --- auth ---
+    if (path === '/api/auth/login' && req.method === 'POST') {
+      const body = await readBody(req);
+      const u = users.find(
+        (x) => x.username === (body.username || '').trim() && x.password === body.password,
+      );
+      if (!u) return send(res, 401, { message: 'Неверный логин или пароль' }, origin);
+      return send(
+        res,
+        200,
+        {
+          accessToken: makeToken('access', u.id, u.role),
+          refreshToken: makeToken('refresh', u.id, u.role),
+          user: publicUser(u),
+        },
+        origin,
+      );
+    }
+    if (path === '/api/auth/register' && req.method === 'POST') {
+      const body = await readBody(req);
+      const username = (body.username || '').trim();
+      const password = body.password || '';
+      if (!username || !password) {
+        return send(res, 422, { message: 'Ошибка валидации', errors: { username: 'Заполните поля' } }, origin);
+      }
+      if (!passwordStrong(password)) {
+        return send(
+          res,
+          422,
+          {
+            message: 'Ошибка валидации',
+            errors: { password: 'Пароль: ≥8 символов, цифра и спецсимвол' },
+          },
+          origin,
+        );
+      }
+      if (users.some((x) => x.username.toLowerCase() === username.toLowerCase())) {
+        return send(res, 422, { message: 'Ошибка валидации', errors: { username: 'Логин занят' } }, origin);
+      }
+      const created = {
+        id: nextId.users++,
+        username,
+        password,
+        role: 'volunteer',
+        displayName: (body.displayName || username).trim(),
+      };
+      users.push(created);
+      return send(
+        res,
+        201,
+        {
+          accessToken: makeToken('access', created.id, created.role),
+          refreshToken: makeToken('refresh', created.id, created.role),
+          user: publicUser(created),
+        },
+        origin,
+      );
+    }
+    if (path === '/api/auth/refresh' && req.method === 'POST') {
+      const body = await readBody(req);
+      const payload = parseToken(body.refreshToken || '');
+      if (!payload || payload.kind !== 'refresh') {
+        return send(res, 401, { message: 'Сессия истекла' }, origin);
+      }
+      const u = users.find((x) => x.id === payload.sub);
+      if (!u) return send(res, 401, { message: 'Сессия истекла' }, origin);
+      return send(
+        res,
+        200,
+        {
+          accessToken: makeToken('access', u.id, u.role),
+          refreshToken: makeToken('refresh', u.id, u.role),
+          user: publicUser(u),
+        },
+        origin,
+      );
+    }
+    if (path === '/api/auth/me' && req.method === 'GET') {
+      const auth = authFromReq(req);
+      requireAuth(auth);
+      return send(res, 200, publicUser(auth.user), origin);
+    }
+    if (path === '/api/admin/users' && req.method === 'GET') {
+      const auth = authFromReq(req);
+      requireRole(auth, 'admin');
+      return send(res, 200, users.map(publicUser), origin);
+    }
+    const adminUserMatch = path.match(/^\/api\/admin\/users\/(\d+)$/);
+    if (adminUserMatch && req.method === 'PATCH') {
+      const auth = authFromReq(req);
+      requireRole(auth, 'admin');
+      const id = Number(adminUserMatch[1]);
+      const idx = users.findIndex((u) => u.id === id);
+      if (idx === -1) return send(res, 404, { message: 'Не найдено' }, origin);
+      const body = await readBody(req);
+      if (body.role && roleLevel(body.role) >= 1) users[idx].role = body.role;
+      return send(res, 200, publicUser(users[idx]), origin);
+    }
+    if (path === '/api/admin/stats' && req.method === 'GET') {
+      const auth = authFromReq(req);
+      requireRole(auth, 'admin');
+      return send(
+        res,
+        200,
+        {
+          projects: projects.filter((p) => !p.deletedAt).length,
+          partners: partners.filter((p) => !p.deletedAt).length,
+          volunteers: volunteers.filter((v) => !v.deletedAt).length,
+          categories: categories.filter((c) => !c.deletedAt).length,
+        },
+        origin,
+      );
+    }
+
+    const auth = authFromReq(req);
+    const isAuthPath = path.startsWith('/api/auth/');
+    if (path.startsWith('/api/') && !isAuthPath) {
+      requireAuth(auth);
+    }
+
     // --- projects ---
     if (path === '/api/projects' && req.method === 'GET') {
+      requireRole(auth, 'volunteer');
       return send(res, 200, filterProjects(projects, q), origin);
     }
     if (path === '/api/projects' && req.method === 'POST') {
+      requireRole(auth, 'coordinator');
       const body = await readBody(req);
       const code = (body.code || '').trim();
       if (projects.some((p) => !p.deletedAt && p.code.toLowerCase() === code.toLowerCase())) {
@@ -238,11 +417,16 @@ const server = http.createServer(async (req, res) => {
       const idx = projects.findIndex((p) => p.id === id);
       if (idx === -1) return send(res, 404, { message: 'Не найдено' }, origin);
       if (projectMatch[2] === '/restore' && req.method === 'POST') {
+        requireRole(auth, 'admin');
         projects[idx].deletedAt = null;
         return send(res, 200, expandProject(projects[idx]), origin);
       }
-      if (req.method === 'GET') return send(res, 200, expandProject(projects[idx]), origin);
+      if (req.method === 'GET') {
+        requireRole(auth, 'volunteer');
+        return send(res, 200, expandProject(projects[idx]), origin);
+      }
       if (req.method === 'PUT') {
+        requireRole(auth, 'coordinator');
         const body = await readBody(req);
         const code = (body.code || '').trim();
         if (
@@ -261,12 +445,18 @@ const server = http.createServer(async (req, res) => {
         return send(res, 200, expandProject(projects[idx]), origin);
       }
       if (req.method === 'DELETE') {
-        if (q.hard) projects.splice(idx, 1);
-        else projects[idx].deletedAt = new Date().toISOString();
+        if (q.hard) {
+          requireRole(auth, 'admin');
+          projects.splice(idx, 1);
+        } else {
+          requireRole(auth, 'coordinator');
+          projects[idx].deletedAt = new Date().toISOString();
+        }
         return send(res, 204, undefined, origin);
       }
     }
     if (path === '/api/projects/bulk-delete' && req.method === 'POST') {
+      requireRole(auth, 'coordinator');
       const body = await readBody(req);
       let deleted = 0;
       for (const id of body.ids || []) {
@@ -281,6 +471,7 @@ const server = http.createServer(async (req, res) => {
 
     // --- categories (направления) ---
     if (path === '/api/categories' && req.method === 'GET') {
+      requireRole(auth, 'volunteer');
       return send(
         res,
         200,
@@ -291,6 +482,7 @@ const server = http.createServer(async (req, res) => {
       );
     }
     if (path === '/api/categories' && req.method === 'POST') {
+      requireRole(auth, 'coordinator');
       const body = await readBody(req);
       const name = (body.name || '').trim();
       if (categories.some((c) => !c.deletedAt && c.name.toLowerCase() === name.toLowerCase())) {
@@ -306,11 +498,16 @@ const server = http.createServer(async (req, res) => {
       const idx = categories.findIndex((c) => c.id === id);
       if (idx === -1) return send(res, 404, { message: 'Не найдено' }, origin);
       if (catMatch[2] && req.method === 'POST') {
+        requireRole(auth, 'admin');
         categories[idx].deletedAt = null;
         return send(res, 200, categories[idx], origin);
       }
-      if (req.method === 'GET') return send(res, 200, categories[idx], origin);
+      if (req.method === 'GET') {
+        requireRole(auth, 'coordinator');
+        return send(res, 200, categories[idx], origin);
+      }
       if (req.method === 'PUT') {
+        requireRole(auth, 'coordinator');
         const body = await readBody(req);
         categories[idx].name = body.name;
         return send(res, 200, categories[idx], origin);
@@ -320,12 +517,18 @@ const server = http.createServer(async (req, res) => {
         if (!q.hard && linked > 0) {
           return send(res, 409, { message: `Нельзя удалить: привязано проектов: ${linked}` }, origin);
         }
-        if (q.hard) categories.splice(idx, 1);
-        else categories[idx].deletedAt = new Date().toISOString();
+        if (q.hard) {
+          requireRole(auth, 'admin');
+          categories.splice(idx, 1);
+        } else {
+          requireRole(auth, 'coordinator');
+          categories[idx].deletedAt = new Date().toISOString();
+        }
         return send(res, 204, undefined, origin);
       }
     }
     if (path === '/api/categories/bulk-delete' && req.method === 'POST') {
+      requireRole(auth, 'coordinator');
       const body = await readBody(req);
       let deleted = 0;
       for (const id of body.ids || []) {
@@ -367,6 +570,7 @@ const server = http.createServer(async (req, res) => {
 
     for (const route of simpleRoutes) {
       if (path === route.path && req.method === 'GET') {
+        requireRole(auth, route.key === 'volunteers' ? 'coordinator' : 'volunteer');
         const sort =
           route.key === 'partners'
             ? {
@@ -378,6 +582,7 @@ const server = http.createServer(async (req, res) => {
         return send(res, 200, crudList(route.arr, q, route.search, sort), origin);
       }
       if (path === route.path && req.method === 'POST') {
+        requireRole(auth, 'coordinator');
         const body = await readBody(req);
         if (route.key === 'volunteers') {
           const email = (body.email || '').trim().toLowerCase();
@@ -398,22 +603,33 @@ const server = http.createServer(async (req, res) => {
         const idx = route.arr.findIndex((x) => x.id === id);
         if (idx === -1) return send(res, 404, { message: 'Не найдено' }, origin);
         if (m[2] && req.method === 'POST') {
+          requireRole(auth, 'admin');
           route.arr[idx].deletedAt = null;
           return send(res, 200, route.arr[idx], origin);
         }
-        if (req.method === 'GET') return send(res, 200, route.arr[idx], origin);
+        if (req.method === 'GET') {
+          requireRole(auth, route.key === 'volunteers' ? 'coordinator' : 'volunteer');
+          return send(res, 200, route.arr[idx], origin);
+        }
         if (req.method === 'PUT') {
+          requireRole(auth, 'coordinator');
           const body = await readBody(req);
           route.arr[idx] = { ...route.arr[idx], ...body, id };
           return send(res, 200, route.arr[idx], origin);
         }
         if (req.method === 'DELETE') {
-          if (q.hard) route.arr.splice(idx, 1);
-          else route.arr[idx].deletedAt = new Date().toISOString();
+          if (q.hard) {
+            requireRole(auth, 'admin');
+            route.arr.splice(idx, 1);
+          } else {
+            requireRole(auth, 'coordinator');
+            route.arr[idx].deletedAt = new Date().toISOString();
+          }
           return send(res, 204, undefined, origin);
         }
       }
       if (path === `${route.path}/bulk-delete` && req.method === 'POST') {
+        requireRole(auth, 'coordinator');
         const body = await readBody(req);
         let deleted = 0;
         for (const id of body.ids || []) {

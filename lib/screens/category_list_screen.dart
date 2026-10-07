@@ -12,7 +12,10 @@ import '../widgets/debounced_search_field.dart';
 import '../widgets/category_delete_feedback.dart';
 import '../widgets/delete_dialogs.dart';
 import '../widgets/entity_table.dart';
+import '../widgets/entity_action_visibility.dart';
 import '../widgets/pagination_bar.dart';
+import '../widgets/role_gate.dart';
+import '../models/app_role.dart';
 
 class CategoryListScreen extends StatefulWidget {
   const CategoryListScreen({super.key});
@@ -35,14 +38,15 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
     final notifier = context.watch<CategoryListNotifier>();
     final q = notifier.query;
     final useCards = MediaQuery.sizeOf(context).width < 600;
+    final actionVis = EntityActionVisibility.of(context);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Направления фонда'),
         actions: [
-          if (notifier.hasSelection)
+          if (actionVis.canManage && notifier.hasSelection)
             Center(child: Text('Выбрано: ${notifier.selected.length}  ')),
-          if (notifier.hasSelection)
+          if (actionVis.canManage && notifier.hasSelection)
             IconButton(
               icon: const Icon(Icons.delete_sweep),
               onPressed: () async {
@@ -55,12 +59,15 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
                 }
               },
             ),
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () async {
-              await context.push('/categories/new');
-              if (context.mounted) await notifier.load();
-            },
+          RoleGate(
+            minRole: AppRole.coordinator,
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () async {
+                await context.push('/categories/new');
+                if (context.mounted) await notifier.load();
+              },
+            ),
           ),
         ],
       ),
@@ -91,11 +98,13 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
                           final c = notifier.result.items[i];
                           return Card(
                             child: ListTile(
-                              leading: Checkbox(
-                                value: notifier.selected.contains(c.id),
-                                onChanged: (_) =>
-                                    notifier.toggleSelection(c.id),
-                              ),
+                              leading: actionVis.canManage
+                                  ? Checkbox(
+                                      value: notifier.selected.contains(c.id),
+                                      onChanged: (_) =>
+                                          notifier.toggleSelection(c.id),
+                                    )
+                                  : null,
                               title: Text(c.name),
                               onTap: () => context.go('/categories/${c.id}'),
                             ),
@@ -106,7 +115,9 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
                         items: notifier.result.items,
                         idOf: (c) => c.id,
                         selected: notifier.selected,
-                        onToggleSelect: notifier.toggleSelection,
+                        onToggleSelect: actionVis.canManage
+                            ? notifier.toggleSelection
+                            : null,
                         sortField: q.sortField,
                         sortAscending: q.sortAscending,
                         onSort: (f) => _pushQuery(
@@ -124,16 +135,17 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
                           ),
                         ],
                         actions: (c) => [
-                          IconButton(
-                            icon: const Icon(Icons.edit),
-                            onPressed: () =>
-                                context.push('/categories/${c.id}/edit'),
-                          ),
+                          if (actionVis.canManage)
+                            IconButton(
+                              icon: const Icon(Icons.edit),
+                              onPressed: () =>
+                                  context.push('/categories/${c.id}/edit'),
+                            ),
                           IconButton(
                             icon: const Icon(Icons.visibility),
                             onPressed: () => context.go('/categories/${c.id}'),
                           ),
-                          if (c.isDeleted)
+                          if (actionVis.canAdmin && c.isDeleted)
                             IconButton(
                               icon: const Icon(Icons.restore),
                               onPressed: () async {
@@ -141,7 +153,7 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
                                 _pushQuery(notifier.query);
                               },
                             )
-                          else
+                          else if (actionVis.canManage && !c.isDeleted)
                             IconButton(
                               icon: const Icon(Icons.delete_outline),
                               onPressed: () async {

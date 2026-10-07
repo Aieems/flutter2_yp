@@ -12,7 +12,10 @@ import '../widgets/async_list_body.dart';
 import '../widgets/debounced_search_field.dart';
 import '../widgets/delete_dialogs.dart';
 import '../widgets/entity_table.dart';
+import '../models/app_role.dart';
+import '../widgets/entity_action_visibility.dart';
 import '../widgets/pagination_bar.dart';
+import '../widgets/role_gate.dart';
 
 class TagListScreen extends StatefulWidget {
   const TagListScreen({super.key});
@@ -53,14 +56,15 @@ class _TagListScreenState extends State<TagListScreen> {
     final q = notifier.query;
     final useCards = MediaQuery.sizeOf(context).width < 600;
     final categoryNames = {for (final c in _categories) c.id: c.name};
+    final actionVis = EntityActionVisibility.of(context);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Теги проектов'),
         actions: [
-          if (notifier.hasSelection)
+          if (actionVis.canManage && notifier.hasSelection)
             Center(child: Text('Выбрано: ${notifier.selected.length}  ')),
-          if (notifier.hasSelection)
+          if (actionVis.canManage && notifier.hasSelection)
             IconButton(
               icon: const Icon(Icons.delete_sweep),
               onPressed: () async {
@@ -73,12 +77,15 @@ class _TagListScreenState extends State<TagListScreen> {
                 }
               },
             ),
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () async {
-              await context.push('/tags/new');
-              if (context.mounted) await notifier.load();
-            },
+          RoleGate(
+            minRole: AppRole.coordinator,
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () async {
+                await context.push('/tags/new');
+                if (context.mounted) await notifier.load();
+              },
+            ),
           ),
         ],
       ),
@@ -125,11 +132,13 @@ class _TagListScreenState extends State<TagListScreen> {
                           final t = notifier.result.items[i];
                           return Card(
                             child: ListTile(
-                              leading: Checkbox(
-                                value: notifier.selected.contains(t.id),
-                                onChanged: (_) =>
-                                    notifier.toggleSelection(t.id),
-                              ),
+                              leading: actionVis.canManage
+                                  ? Checkbox(
+                                      value: notifier.selected.contains(t.id),
+                                      onChanged: (_) =>
+                                          notifier.toggleSelection(t.id),
+                                    )
+                                  : null,
                               title: Text(t.name),
                               subtitle: Text(
                                 categoryNames[t.categoryId] ?? '',
@@ -143,7 +152,9 @@ class _TagListScreenState extends State<TagListScreen> {
                         items: notifier.result.items,
                         idOf: (t) => t.id,
                         selected: notifier.selected,
-                        onToggleSelect: notifier.toggleSelection,
+                        onToggleSelect: actionVis.canManage
+                            ? notifier.toggleSelection
+                            : null,
                         sortField: q.sortField,
                         sortAscending: q.sortAscending,
                         onSort: (f) => _pushQuery(
@@ -169,15 +180,17 @@ class _TagListScreenState extends State<TagListScreen> {
                           ),
                         ],
                         actions: (t) => [
-                          IconButton(
-                            icon: const Icon(Icons.edit),
-                            onPressed: () => context.push('/tags/${t.id}/edit'),
-                          ),
+                          if (actionVis.canManage)
+                            IconButton(
+                              icon: const Icon(Icons.edit),
+                              onPressed: () =>
+                                  context.push('/tags/${t.id}/edit'),
+                            ),
                           IconButton(
                             icon: const Icon(Icons.visibility),
                             onPressed: () => context.go('/tags/${t.id}'),
                           ),
-                          if (t.isDeleted)
+                          if (actionVis.canAdmin && t.isDeleted)
                             IconButton(
                               icon: const Icon(Icons.restore),
                               onPressed: () async {
@@ -185,7 +198,7 @@ class _TagListScreenState extends State<TagListScreen> {
                                 _pushQuery(notifier.query);
                               },
                             )
-                          else
+                          else if (actionVis.canManage && !t.isDeleted)
                             IconButton(
                               icon: const Icon(Icons.delete_outline),
                               onPressed: () async {

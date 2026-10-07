@@ -6,7 +6,10 @@ import '../models/project.dart';
 import '../repositories/category_repository.dart';
 import '../repositories/project_repository.dart';
 import '../repositories/tag_repository.dart';
+import '../core/show_api_error.dart';
+import '../models/app_role.dart';
 import '../widgets/delete_dialogs.dart';
+import '../widgets/role_gate.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
   const ProjectDetailScreen({super.key, required this.projectId});
@@ -95,12 +98,15 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
           onPressed: () => context.pop(),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () async {
-              await context.push('/projects/${p.id}/edit');
-              if (mounted) await _load();
-            },
+          RoleGate(
+            minRole: AppRole.coordinator,
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () async {
+                await context.push('/projects/${p.id}/edit');
+                if (mounted) await _load();
+              },
+            ),
           ),
         ],
       ),
@@ -128,35 +134,58 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             Wrap(
               spacing: 8,
               children: [
-                if (p.isDeleted)
-                  FilledButton.icon(
+                RoleGate(
+                  minRole: AppRole.admin,
+                  builder: (context) => p.isDeleted
+                      ? FilledButton.icon(
+                          onPressed: () async {
+                            try {
+                              await repo.restore(p.id);
+                              await _load();
+                            } catch (e) {
+                              if (context.mounted) showApiError(context, e);
+                            }
+                          },
+                          icon: const Icon(Icons.restore),
+                          label: const Text('Восстановить'),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+                RoleGate(
+                  minRole: AppRole.coordinator,
+                  builder: (context) => !p.isDeleted
+                      ? FilledButton.icon(
+                          onPressed: () async {
+                            if (await confirmSoftDelete(context, p.title)) {
+                              try {
+                                await repo.softDelete(p.id);
+                                if (context.mounted) context.pop();
+                              } catch (e) {
+                                if (context.mounted) showApiError(context, e);
+                              }
+                            }
+                          },
+                          icon: const Icon(Icons.delete_outline),
+                          label: const Text('Логическое удаление'),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+                RoleGate(
+                  minRole: AppRole.admin,
+                  builder: (context) => OutlinedButton.icon(
                     onPressed: () async {
-                      await repo.restore(p.id);
-                      await _load();
-                    },
-                    icon: const Icon(Icons.restore),
-                    label: const Text('Восстановить'),
-                  )
-                else
-                  FilledButton.icon(
-                    onPressed: () async {
-                      if (await confirmSoftDelete(context, p.title)) {
-                        await repo.softDelete(p.id);
-                        if (context.mounted) context.pop();
+                      if (await confirmHardDelete(context, p.title)) {
+                        try {
+                          await repo.hardDelete(p.id);
+                          if (context.mounted) context.pop();
+                        } catch (e) {
+                          if (context.mounted) showApiError(context, e);
+                        }
                       }
                     },
-                    icon: const Icon(Icons.delete_outline),
-                    label: const Text('Логическое удаление'),
+                    icon: const Icon(Icons.delete_forever),
+                    label: const Text('Удалить навсегда'),
                   ),
-                OutlinedButton.icon(
-                  onPressed: () async {
-                    if (await confirmHardDelete(context, p.title)) {
-                      await repo.hardDelete(p.id);
-                      if (context.mounted) context.pop();
-                    }
-                  },
-                  icon: const Icon(Icons.delete_forever),
-                  label: const Text('Удалить навсегда'),
                 ),
               ],
             ),

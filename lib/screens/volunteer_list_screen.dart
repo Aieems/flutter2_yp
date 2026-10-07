@@ -10,7 +10,10 @@ import '../widgets/async_list_body.dart';
 import '../widgets/debounced_search_field.dart';
 import '../widgets/delete_dialogs.dart';
 import '../widgets/entity_table.dart';
+import '../models/app_role.dart';
+import '../widgets/entity_action_visibility.dart';
 import '../widgets/pagination_bar.dart';
+import '../widgets/role_gate.dart';
 
 class VolunteerListScreen extends StatefulWidget {
   const VolunteerListScreen({super.key});
@@ -33,14 +36,15 @@ class _VolunteerListScreenState extends State<VolunteerListScreen> {
     final notifier = context.watch<VolunteerListNotifier>();
     final q = notifier.query;
     final useCards = MediaQuery.sizeOf(context).width < 600;
+    final actionVis = EntityActionVisibility.of(context);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Волонтёры'),
         actions: [
-          if (notifier.hasSelection)
+          if (actionVis.canManage && notifier.hasSelection)
             Center(child: Text('Выбрано: ${notifier.selected.length}  ')),
-          if (notifier.hasSelection)
+          if (actionVis.canManage && notifier.hasSelection)
             IconButton(
               icon: const Icon(Icons.delete_sweep),
               onPressed: () async {
@@ -53,12 +57,15 @@ class _VolunteerListScreenState extends State<VolunteerListScreen> {
                 }
               },
             ),
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () async {
-              await context.push('/volunteers/new');
-              if (context.mounted) await notifier.load();
-            },
+          RoleGate(
+            minRole: AppRole.coordinator,
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () async {
+                await context.push('/volunteers/new');
+                if (context.mounted) await notifier.load();
+              },
+            ),
           ),
         ],
       ),
@@ -89,11 +96,13 @@ class _VolunteerListScreenState extends State<VolunteerListScreen> {
                           final v = notifier.result.items[i];
                           return Card(
                             child: ListTile(
-                              leading: Checkbox(
-                                value: notifier.selected.contains(v.id),
-                                onChanged: (_) =>
-                                    notifier.toggleSelection(v.id),
-                              ),
+                              leading: actionVis.canManage
+                                  ? Checkbox(
+                                      value: notifier.selected.contains(v.id),
+                                      onChanged: (_) =>
+                                          notifier.toggleSelection(v.id),
+                                    )
+                                  : null,
                               title: Text(v.displayName),
                               subtitle: Text(v.email),
                               onTap: () => context.go('/volunteers/${v.id}'),
@@ -105,7 +114,9 @@ class _VolunteerListScreenState extends State<VolunteerListScreen> {
                         items: notifier.result.items,
                         idOf: (v) => v.id,
                         selected: notifier.selected,
-                        onToggleSelect: notifier.toggleSelection,
+                        onToggleSelect: actionVis.canManage
+                            ? notifier.toggleSelection
+                            : null,
                         sortField: q.sortField,
                         sortAscending: q.sortAscending,
                         onSort: (f) => _pushQuery(
@@ -132,16 +143,17 @@ class _VolunteerListScreenState extends State<VolunteerListScreen> {
                           ),
                         ],
                         actions: (v) => [
-                          IconButton(
-                            icon: const Icon(Icons.edit),
-                            onPressed: () =>
-                                context.push('/volunteers/${v.id}/edit'),
-                          ),
+                          if (actionVis.canManage)
+                            IconButton(
+                              icon: const Icon(Icons.edit),
+                              onPressed: () =>
+                                  context.push('/volunteers/${v.id}/edit'),
+                            ),
                           IconButton(
                             icon: const Icon(Icons.visibility),
                             onPressed: () => context.go('/volunteers/${v.id}'),
                           ),
-                          if (v.isDeleted)
+                          if (actionVis.canAdmin && v.isDeleted)
                             IconButton(
                               icon: const Icon(Icons.restore),
                               onPressed: () async {
@@ -149,7 +161,7 @@ class _VolunteerListScreenState extends State<VolunteerListScreen> {
                                 _pushQuery(notifier.query);
                               },
                             )
-                          else
+                          else if (actionVis.canManage && !v.isDeleted)
                             IconButton(
                               icon: const Icon(Icons.delete_outline),
                               onPressed: () async {

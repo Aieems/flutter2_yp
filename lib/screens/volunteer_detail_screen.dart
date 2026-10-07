@@ -4,7 +4,10 @@ import 'package:provider/provider.dart';
 
 import '../models/volunteer.dart';
 import '../repositories/volunteer_repository.dart';
+import '../core/show_api_error.dart';
+import '../models/app_role.dart';
 import '../widgets/delete_dialogs.dart';
+import '../widgets/role_gate.dart';
 
 class VolunteerDetailScreen extends StatefulWidget {
   const VolunteerDetailScreen({super.key, required this.volunteerId});
@@ -48,9 +51,12 @@ class _VolunteerDetailScreenState extends State<VolunteerDetailScreen> {
       appBar: AppBar(
         title: Text(v.displayName),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () => context.push('/volunteers/${v.id}/edit'),
+          RoleGate(
+            minRole: AppRole.coordinator,
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () => context.push('/volunteers/${v.id}/edit'),
+            ),
           ),
         ],
       ),
@@ -70,35 +76,58 @@ class _VolunteerDetailScreenState extends State<VolunteerDetailScreen> {
             Wrap(
               spacing: 8,
               children: [
-                if (v.isDeleted)
-                  FilledButton.icon(
+                RoleGate(
+                  minRole: AppRole.admin,
+                  builder: (context) => v.isDeleted
+                      ? FilledButton.icon(
+                          onPressed: () async {
+                            try {
+                              await repo.restore(v.id);
+                              await _load();
+                            } catch (e) {
+                              if (context.mounted) showApiError(context, e);
+                            }
+                          },
+                          icon: const Icon(Icons.restore),
+                          label: const Text('Восстановить'),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+                RoleGate(
+                  minRole: AppRole.coordinator,
+                  builder: (context) => !v.isDeleted
+                      ? FilledButton.icon(
+                          onPressed: () async {
+                            if (await confirmSoftDelete(context, v.displayName)) {
+                              try {
+                                await repo.softDelete(v.id);
+                                if (context.mounted) context.pop();
+                              } catch (e) {
+                                if (context.mounted) showApiError(context, e);
+                              }
+                            }
+                          },
+                          icon: const Icon(Icons.delete_outline),
+                          label: const Text('Логическое удаление'),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+                RoleGate(
+                  minRole: AppRole.admin,
+                  builder: (context) => OutlinedButton.icon(
                     onPressed: () async {
-                      await repo.restore(v.id);
-                      await _load();
-                    },
-                    icon: const Icon(Icons.restore),
-                    label: const Text('Восстановить'),
-                  )
-                else
-                  FilledButton.icon(
-                    onPressed: () async {
-                      if (await confirmSoftDelete(context, v.displayName)) {
-                        await repo.softDelete(v.id);
-                        if (context.mounted) context.pop();
+                      if (await confirmHardDelete(context, v.displayName)) {
+                        try {
+                          await repo.hardDelete(v.id);
+                          if (context.mounted) context.pop();
+                        } catch (e) {
+                          if (context.mounted) showApiError(context, e);
+                        }
                       }
                     },
-                    icon: const Icon(Icons.delete_outline),
-                    label: const Text('Логическое удаление'),
+                    icon: const Icon(Icons.delete_forever),
+                    label: const Text('Удалить навсегда'),
                   ),
-                OutlinedButton.icon(
-                  onPressed: () async {
-                    if (await confirmHardDelete(context, v.displayName)) {
-                      await repo.hardDelete(v.id);
-                      if (context.mounted) context.pop();
-                    }
-                  },
-                  icon: const Icon(Icons.delete_forever),
-                  label: const Text('Удалить навсегда'),
                 ),
               ],
             ),
