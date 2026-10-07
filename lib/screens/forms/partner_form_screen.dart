@@ -29,12 +29,7 @@ class _PartnerFormScreenState extends State<PartnerFormScreen> {
   @override
   void initState() {
     super.initState();
-    for (final c in [
-      _lastNameCtrl,
-      _firstNameCtrl,
-      _countryCtrl,
-      _yearCtrl,
-    ]) {
+    for (final c in [_lastNameCtrl, _firstNameCtrl, _countryCtrl, _yearCtrl]) {
       c.addListener(() {
         if (!_dirty) setState(() => _dirty = true);
       });

@@ -22,16 +22,17 @@ class VolunteerCard {
   }
 
   Map<String, dynamic> toJson() => {
-        'cardNumber': cardNumber,
-        'issuedAt': issuedAt.toIso8601String(),
-        'expiresAt': expiresAt.toIso8601String(),
-      };
+    'cardNumber': cardNumber,
+    'issuedAt': issuedAt.toIso8601String(),
+    'expiresAt': expiresAt.toIso8601String(),
+  };
 
   factory VolunteerCard.fromJson(Map<String, dynamic> json) => VolunteerCard(
-        cardNumber: json['cardNumber'] as String? ?? '',
-        issuedAt: DateTime.tryParse(json['issuedAt'] as String? ?? '') ??
-            DateTime.now(),
-        expiresAt: DateTime.tryParse(json['expiresAt'] as String? ?? '') ??
-            DateTime.now().add(const Duration(days: 365)),
-      );
+    cardNumber: json['cardNumber'] as String? ?? '',
+    issuedAt:
+        DateTime.tryParse(json['issuedAt'] as String? ?? '') ?? DateTime.now(),
+    expiresAt:
+        DateTime.tryParse(json['expiresAt'] as String? ?? '') ??
+        DateTime.now().add(const Duration(days: 365)),
+  );
 }

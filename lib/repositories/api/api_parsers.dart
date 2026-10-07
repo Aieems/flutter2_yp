@@ -13,9 +13,9 @@ PageResult<T> parsePage<T>(
   final itemsRaw = data['items'];
   final items = itemsRaw is List
       ? itemsRaw
-          .whereType<Map>()
-          .map((e) => fromJson(e.cast<String, dynamic>()))
-          .toList()
+            .whereType<Map>()
+            .map((e) => fromJson(e.cast<String, dynamic>()))
+            .toList()
       : <T>[];
   return PageResult(
     items: items,
@@ -59,49 +59,49 @@ List<int> _ids(Map<String, dynamic> json, String idsKey, String objectsKey) {
 }
 
 Map<String, dynamic> projectToApiBody(Project project) => {
-      'title': project.title,
-      'code': project.code,
-      'year': project.year,
-      'goalAmount': project.goalAmount,
-      'categoryId': project.categoryId,
-      'partnerIds': project.partnerIds,
-      'tagIds': project.tagIds,
-      'volunteersTotal': project.volunteersTotal,
-      'volunteersActive': project.volunteersActive,
-    };
+  'title': project.title,
+  'code': project.code,
+  'year': project.year,
+  'goalAmount': project.goalAmount,
+  'categoryId': project.categoryId,
+  'partnerIds': project.partnerIds,
+  'tagIds': project.tagIds,
+  'volunteersTotal': project.volunteersTotal,
+  'volunteersActive': project.volunteersActive,
+};
 
 FundCategory categoryFromApi(Map<String, dynamic> json) => FundCategory(
-      id: json['id'] as int? ?? 0,
-      name: json['name'] as String? ?? '',
-      deletedAt: json['deletedAt'] == null
-          ? null
-          : DateTime.tryParse(json['deletedAt'] as String),
-    );
+  id: json['id'] as int? ?? 0,
+  name: json['name'] as String? ?? '',
+  deletedAt: json['deletedAt'] == null
+      ? null
+      : DateTime.tryParse(json['deletedAt'] as String),
+);
 
 FundTag tagFromApi(Map<String, dynamic> json) => FundTag(
-      id: json['id'] as int? ?? 0,
-      name: json['name'] as String? ?? '',
-      categoryId: json['categoryId'] as int? ?? 0,
-      deletedAt: json['deletedAt'] == null
-          ? null
-          : DateTime.tryParse(json['deletedAt'] as String),
-    );
+  id: json['id'] as int? ?? 0,
+  name: json['name'] as String? ?? '',
+  categoryId: json['categoryId'] as int? ?? 0,
+  deletedAt: json['deletedAt'] == null
+      ? null
+      : DateTime.tryParse(json['deletedAt'] as String),
+);
 
 Map<String, dynamic> tagToApiBody(FundTag tag) => {
-      'name': tag.name,
-      'categoryId': tag.categoryId,
-    };
+  'name': tag.name,
+  'categoryId': tag.categoryId,
+};
 
 Partner partnerFromApi(Map<String, dynamic> json) => Partner(
-      id: json['id'] as int? ?? 0,
-      lastName: json['lastName'] as String? ?? '',
-      firstName: json['firstName'] as String? ?? '',
-      country: json['country'] as String? ?? '',
-      birthYear: json['birthYear'] as int? ?? 0,
-      deletedAt: json['deletedAt'] == null
-          ? null
-          : DateTime.tryParse(json['deletedAt'] as String),
-    );
+  id: json['id'] as int? ?? 0,
+  lastName: json['lastName'] as String? ?? '',
+  firstName: json['firstName'] as String? ?? '',
+  country: json['country'] as String? ?? '',
+  birthYear: json['birthYear'] as int? ?? 0,
+  deletedAt: json['deletedAt'] == null
+      ? null
+      : DateTime.tryParse(json['deletedAt'] as String),
+);
 
 Volunteer volunteerFromApi(Map<String, dynamic> json) {
   final cardRaw = json['card'];
@@ -115,9 +115,11 @@ Volunteer volunteerFromApi(Map<String, dynamic> json) {
     email: json['email'] as String? ?? '',
     card: VolunteerCard(
       cardNumber: cardMap['cardNumber'] as String? ?? '',
-      issuedAt: DateTime.tryParse(cardMap['issuedAt'] as String? ?? '') ??
+      issuedAt:
+          DateTime.tryParse(cardMap['issuedAt'] as String? ?? '') ??
           DateTime.now(),
-      expiresAt: DateTime.tryParse(cardMap['expiresAt'] as String? ?? '') ??
+      expiresAt:
+          DateTime.tryParse(cardMap['expiresAt'] as String? ?? '') ??
           DateTime.now().add(const Duration(days: 365)),
     ),
     deletedAt: json['deletedAt'] == null
@@ -127,14 +129,14 @@ Volunteer volunteerFromApi(Map<String, dynamic> json) {
 }
 
 Map<String, dynamic> volunteerToApiBody(Volunteer v) => {
-      'firstName': v.firstName,
-      'lastName': v.lastName,
-      'email': v.email,
-      'card': {
-        'cardNumber': v.card.cardNumber,
-        'issuedAt': v.card.issuedAt.toIso8601String(),
-        'expiresAt': v.card.expiresAt.toIso8601String(),
-      },
-    };
+  'firstName': v.firstName,
+  'lastName': v.lastName,
+  'email': v.email,
+  'card': {
+    'cardNumber': v.card.cardNumber,
+    'issuedAt': v.card.issuedAt.toIso8601String(),
+    'expiresAt': v.card.expiresAt.toIso8601String(),
+  },
+};
 
 String projectSortToApi(String field) => field;

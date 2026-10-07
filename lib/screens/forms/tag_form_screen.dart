@@ -100,10 +100,7 @@ class _TagFormScreenState extends State<TagFormScreen> {
           ),
           items: _categories
               .map(
-                (c) => DropdownMenuItem<int>(
-                  value: c.id,
-                  child: Text(c.name),
-                ),
+                (c) => DropdownMenuItem<int>(value: c.id, child: Text(c.name)),
               )
               .toList(),
           onChanged: (v) => setState(() {

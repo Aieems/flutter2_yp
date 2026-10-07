@@ -38,8 +38,7 @@ class ProjectQuery {
     return ProjectQuery(
       search: search ?? this.search,
       tagId: tagId == _unset ? this.tagId : tagId as int?,
-      categoryId:
-          categoryId == _unset ? this.categoryId : categoryId as int?,
+      categoryId: categoryId == _unset ? this.categoryId : categoryId as int?,
       yearFrom: yearFrom == _unset ? this.yearFrom : yearFrom as int?,
       yearTo: yearTo == _unset ? this.yearTo : yearTo as int?,
       sortField: sortField ?? this.sortField,

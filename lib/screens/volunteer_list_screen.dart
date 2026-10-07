@@ -11,6 +11,7 @@ import '../widgets/debounced_search_field.dart';
 import '../widgets/delete_dialogs.dart';
 import '../widgets/entity_table.dart';
 import '../models/app_role.dart';
+import '../core/breakpoints.dart';
 import '../widgets/entity_action_visibility.dart';
 import '../widgets/pagination_bar.dart';
 import '../widgets/role_gate.dart';
@@ -35,7 +36,7 @@ class _VolunteerListScreenState extends State<VolunteerListScreen> {
   Widget build(BuildContext context) {
     final notifier = context.watch<VolunteerListNotifier>();
     final q = notifier.query;
-    final useCards = MediaQuery.sizeOf(context).width < 600;
+    final useCards = !AppBreakpoints.useTableOnLists(context);
     final actionVis = EntityActionVisibility.of(context);
 
     return Scaffold(
@@ -122,8 +123,9 @@ class _VolunteerListScreenState extends State<VolunteerListScreen> {
                         onSort: (f) => _pushQuery(
                           q.copyWith(
                             sortField: f,
-                            sortAscending:
-                                f == q.sortField ? !q.sortAscending : true,
+                            sortAscending: f == q.sortField
+                                ? !q.sortAscending
+                                : true,
                           ),
                         ),
                         columns: [

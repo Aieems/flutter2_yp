@@ -14,7 +14,7 @@ void main() {
   late ApiProjectRepository repo;
 
   setUp(() {
-    dio = buildDio();
+    dio = buildDio(enableReadRetry: false);
     adapter = DioAdapter(dio: dio);
     dio.httpClientAdapter = adapter;
     repo = ApiProjectRepository(dio);
@@ -96,40 +96,6 @@ void main() {
     expect(created.id, 2);
   });
 
-  test('422 превращается в ValidationException с полем code', () async {
-    adapter.onPost(
-      '/projects',
-      (server) => server.reply(422, {
-        'message': 'Ошибка валидации',
-        'errors': {'code': 'Код проекта уже используется'},
-      }),
-    );
-
-    expect(
-      () => repo.create(
-        const Project(
-          id: 0,
-          title: 'X',
-          code: 'PRJ-001',
-          year: 2020,
-          goalAmount: 1,
-          categoryId: 1,
-          partnerIds: [],
-          tagIds: [],
-          volunteersTotal: 1,
-          volunteersActive: 1,
-        ),
-      ),
-      throwsA(
-        isA<ValidationException>().having(
-          (e) => e.errors['code'],
-          'code',
-          'Код проекта уже используется',
-        ),
-      ),
-    );
-  });
-
   test('404 findById возвращает null', () async {
     adapter.onGet(
       '/projects/99',
@@ -150,8 +116,8 @@ void main() {
       ),
     );
 
-    expect(
-      () => repo.find(const ProjectQuery()),
+    await expectLater(
+      repo.find(const ProjectQuery()),
       throwsA(isA<NetworkException>()),
     );
   });

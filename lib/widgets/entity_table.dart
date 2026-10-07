@@ -55,8 +55,7 @@ class EntityTable<T> extends StatelessWidget {
                   sortColumnIndex: _sortColumnIndex(),
                   sortAscending: sortAscending,
                   columns: [
-                    if (selectEnabled)
-                      const DataColumn(label: Text('')),
+                    if (selectEnabled) const DataColumn(label: Text('')),
                     ...columns.map((col) {
                       return DataColumn(
                         numeric: col.numeric,

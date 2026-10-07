@@ -38,10 +38,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
     try {
       await context.read<AuthNotifier>().register(
-            username: _username.text.trim(),
-            password: _password.text,
-            displayName: _displayName.text.trim(),
-          );
+        username: _username.text.trim(),
+        password: _password.text,
+        displayName: _displayName.text.trim(),
+      );
       if (mounted) context.go('/projects');
     } on ValidationException catch (e) {
       setState(() => _error = e.errors.values.join('\n'));
@@ -80,26 +80,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         padding: const EdgeInsets.only(bottom: 12),
                         child: Text(
                           _error!,
-                          style: TextStyle(color: Theme.of(context).colorScheme.error),
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
                         ),
                       ),
                     TextFormField(
                       controller: _username,
                       decoration: const InputDecoration(labelText: 'Логин *'),
-                      validator: (v) =>
-                          (v == null || v.trim().isEmpty) ? 'Укажите логин' : null,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'Укажите логин'
+                          : null,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _displayName,
-                      decoration: const InputDecoration(labelText: 'Имя для отображения *'),
-                      validator: (v) =>
-                          (v == null || v.trim().isEmpty) ? 'Укажите имя' : null,
+                      decoration: const InputDecoration(
+                        labelText: 'Имя для отображения *',
+                      ),
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'Укажите имя'
+                          : null,
                     ),
                     const SizedBox(height: 12),
                     PasswordStrengthField(
                       controller: _password,
-                      onStrengthChanged: (ok) => setState(() => _passwordOk = ok),
+                      onStrengthChanged: (ok) =>
+                          setState(() => _passwordOk = ok),
                     ),
                     const SizedBox(height: 20),
                     FilledButton(

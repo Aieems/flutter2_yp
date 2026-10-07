@@ -14,13 +14,13 @@ class PersistentProjectRepository implements ProjectRepository {
     SharedPreferences prefs, {
     void Function(String message)? onStorageReset,
   }) : _storage = JsonListStorage<Project>(
-          prefs: prefs,
-          storageKey: 'projects_v1',
-          fromJson: Project.fromJson,
-          toJson: (p) => p.toJson(),
-          seed: () => [...seedProjects],
-          onReset: onStorageReset,
-        ) {
+         prefs: prefs,
+         storageKey: 'projects_v1',
+         fromJson: Project.fromJson,
+         toJson: (p) => p.toJson(),
+         seed: () => [...seedProjects],
+         onReset: onStorageReset,
+       ) {
     _items = _storage.load();
     _nextId = _items.isEmpty
         ? 1
@@ -87,12 +87,7 @@ class PersistentProjectRepository implements ProjectRepository {
     final from = (q.page - 1) * q.size;
     final to = (from + q.size) > total ? total : (from + q.size);
     final items = from >= total ? <Project>[] : rows.sublist(from, to);
-    return PageResult(
-      items: items,
-      page: q.page,
-      size: q.size,
-      total: total,
-    );
+    return PageResult(items: items, page: q.page, size: q.size, total: total);
   }
 
   @override

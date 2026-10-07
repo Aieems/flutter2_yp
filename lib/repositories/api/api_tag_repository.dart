@@ -18,29 +18,28 @@ class ApiTagRepository implements TagRepository {
 
   @override
   Future<PageResult<FundTag>> find(SimpleListQuery q) => guard(() async {
-        final response = await _dio.get<Map<String, dynamic>>(
-          '/tags',
-          queryParameters: {
-            if (q.search.trim().isNotEmpty) 'search': q.search.trim(),
-            'sort': '${q.sortField},${q.sortAscending ? 'asc' : 'desc'}',
-            'page': q.page,
-            'size': q.size,
-            if (q.includeDeleted) 'includeDeleted': true,
-          },
-        );
-        return parsePage(response.data!, tagFromApi);
-      });
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/tags',
+      queryParameters: {
+        if (q.search.trim().isNotEmpty) 'search': q.search.trim(),
+        'sort': '${q.sortField},${q.sortAscending ? 'asc' : 'desc'}',
+        'page': q.page,
+        'size': q.size,
+        if (q.includeDeleted) 'includeDeleted': true,
+      },
+    );
+    return parsePage(response.data!, tagFromApi);
+  });
 
   @override
   Future<FundTag?> findById(int id) => guard(() async {
-        try {
-          final response =
-              await _dio.get<Map<String, dynamic>>('/tags/$id');
-          return tagFromApi(response.data!);
-        } on NotFoundException {
-          return null;
-        }
-      });
+    try {
+      final response = await _dio.get<Map<String, dynamic>>('/tags/$id');
+      return tagFromApi(response.data!);
+    } on NotFoundException {
+      return null;
+    }
+  });
 
   @override
   Future<List<FundTag>> listForSelect({int? categoryId}) async {
@@ -53,61 +52,58 @@ class ApiTagRepository implements TagRepository {
   }
 
   Future<List<FundTag>> _loadAllForSelect() => guard(() async {
-        final response = await _dio.get<Map<String, dynamic>>(
-          '/tags',
-          queryParameters: {'page': 1, 'size': 500},
-        );
-        return parsePage(response.data!, tagFromApi).items;
-      });
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/tags',
+      queryParameters: {'page': 1, 'size': 500},
+    );
+    return parsePage(response.data!, tagFromApi).items;
+  });
 
   @override
   Future<FundTag> create(FundTag item) => guard(() async {
-        _invalidateSelectCache();
-        final response = await _dio.post<Map<String, dynamic>>(
-          '/tags',
-          data: tagToApiBody(item),
-        );
-        return tagFromApi(response.data!);
-      });
+    _invalidateSelectCache();
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/tags',
+      data: tagToApiBody(item),
+    );
+    return tagFromApi(response.data!);
+  });
 
   @override
   Future<FundTag> update(FundTag item) => guard(() async {
-        _invalidateSelectCache();
-        final response = await _dio.put<Map<String, dynamic>>(
-          '/tags/${item.id}',
-          data: tagToApiBody(item),
-        );
-        return tagFromApi(response.data!);
-      });
+    _invalidateSelectCache();
+    final response = await _dio.put<Map<String, dynamic>>(
+      '/tags/${item.id}',
+      data: tagToApiBody(item),
+    );
+    return tagFromApi(response.data!);
+  });
 
   @override
   Future<void> softDelete(int id) => guard(() async {
-        _invalidateSelectCache();
-        await _dio.delete<void>('/tags/$id');
-      });
+    _invalidateSelectCache();
+    await _dio.delete<void>('/tags/$id');
+  });
 
   @override
   Future<void> hardDelete(int id) => guard(() async {
-        _invalidateSelectCache();
-        await _dio.delete<void>(
-          '/tags/$id',
-          queryParameters: {'hard': true},
-        );
-      });
+    _invalidateSelectCache();
+    await _dio.delete<void>('/tags/$id', queryParameters: {'hard': true});
+  });
 
   @override
   Future<void> restore(int id) => guard(() async {
-        _invalidateSelectCache();
-        await _dio.post<void>('/tags/$id/restore');
-      });
+    _invalidateSelectCache();
+    await _dio.post<void>('/tags/$id/restore');
+  });
 
   @override
   Future<int> deleteMany(List<int> ids) => guard(() async {
-        _invalidateSelectCache();
-        final response = await _dio.post<Map<String, dynamic>>(
-          '/tags/bulk-delete',
-          data: {'ids': ids},
-        );
-        return response.data!['deleted'] as int? ?? 0;
-      });
+    _invalidateSelectCache();
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/tags/bulk-delete',
+      data: {'ids': ids},
+    );
+    return response.data!['deleted'] as int? ?? 0;
+  });
 }

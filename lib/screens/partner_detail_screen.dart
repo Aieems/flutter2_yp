@@ -135,7 +135,10 @@ class _PartnerDetailScreenState extends State<PartnerDetailScreen> {
                   builder: (context) => !p.isDeleted
                       ? FilledButton.icon(
                           onPressed: () async {
-                            if (await confirmSoftDelete(context, p.displayName)) {
+                            if (await confirmSoftDelete(
+                              context,
+                              p.displayName,
+                            )) {
                               try {
                                 await repo.softDelete(p.id);
                                 if (context.mounted) context.pop();

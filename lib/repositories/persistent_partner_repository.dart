@@ -16,13 +16,13 @@ class PersistentPartnerRepository implements PartnerRepository {
     this._projects, {
     void Function(String message)? onStorageReset,
   }) : _storage = JsonListStorage<Partner>(
-          prefs: prefs,
-          storageKey: 'partners_v1',
-          fromJson: Partner.fromJson,
-          toJson: (p) => p.toJson(),
-          seed: () => [...seedPartners],
-          onReset: onStorageReset,
-        ) {
+         prefs: prefs,
+         storageKey: 'partners_v1',
+         fromJson: Partner.fromJson,
+         toJson: (p) => p.toJson(),
+         seed: () => [...seedPartners],
+         onReset: onStorageReset,
+       ) {
     _items = _storage.load();
     _nextId = _items.isEmpty
         ? 1
@@ -65,12 +65,7 @@ class PersistentPartnerRepository implements PartnerRepository {
     final from = (q.page - 1) * q.size;
     final to = (from + q.size) > total ? total : (from + q.size);
     final items = from >= total ? <Partner>[] : rows.sublist(from, to);
-    return PageResult(
-      items: items,
-      page: q.page,
-      size: q.size,
-      total: total,
-    );
+    return PageResult(items: items, page: q.page, size: q.size, total: total);
   }
 
   @override

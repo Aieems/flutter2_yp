@@ -11,7 +11,5 @@ void showApiError(BuildContext context, Object error) {
     ApiException e => e.message,
     _ => 'Не удалось выполнить операцию.',
   };
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text(message)),
-  );
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 }

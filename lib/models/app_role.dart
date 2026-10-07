@@ -1,4 +1,3 @@
-
 enum AppRole {
   volunteer(1, 'volunteer', 'Волонтёр'),
   coordinator(2, 'coordinator', 'Координатор'),

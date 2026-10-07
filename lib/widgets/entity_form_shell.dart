@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/breakpoints.dart';
+import 'constrained_dialog.dart';
+
 class EntityFormShell extends StatefulWidget {
   const EntityFormShell({
     super.key,
@@ -28,7 +31,7 @@ class _EntityFormShellState extends State<EntityFormShell> {
 
   Future<bool> _confirmLeave(BuildContext context) async {
     if (!widget.isDirty) return true;
-    final leave = await showDialog<bool>(
+    final leave = await showConstrainedDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Несохранённые изменения'),
@@ -84,24 +87,33 @@ class _EntityFormShellState extends State<EntityFormShell> {
         ),
         body: widget.loading
             ? const Center(child: CircularProgressIndicator())
-            : Form(
-                key: widget.formKey,
-                child: ListView(
-                  padding: const EdgeInsets.all(24),
-                  children: [
-                    ...widget.children,
-                    const SizedBox(height: 24),
-                    FilledButton(
-                      onPressed: _saving ? null : _handleSave,
-                      child: _saving
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('Сохранить'),
+            : Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: AppBreakpoints.formMaxWidth,
+                  ),
+                  child: Form(
+                    key: widget.formKey,
+                    child: ListView(
+                      padding: const EdgeInsets.all(24),
+                      children: [
+                        ...widget.children,
+                        const SizedBox(height: 24),
+                        FilledButton(
+                          onPressed: _saving ? null : _handleSave,
+                          child: _saving
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text('Сохранить'),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
       ),

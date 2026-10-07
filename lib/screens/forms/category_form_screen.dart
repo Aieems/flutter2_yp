@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/api_exceptions.dart';
-import '../../core/api_exceptions.dart';
 import '../../models/fund_category.dart';
 import '../../repositories/category_repository.dart';
 import '../../validation/form_validators.dart';
@@ -43,8 +42,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
 
   Future<void> _load() async {
     if (widget.isEditing) {
-      final c =
-          await context.read<CategoryRepository>().findById(widget.id!);
+      final c = await context.read<CategoryRepository>().findById(widget.id!);
       if (c != null && mounted) _nameCtrl.text = c.name;
     }
     if (mounted) setState(() => _loading = false);
@@ -103,8 +101,9 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
   @override
   Widget build(BuildContext context) {
     return EntityFormShell(
-      title:
-          widget.isEditing ? 'Редактирование направления' : 'Новое направление',
+      title: widget.isEditing
+          ? 'Редактирование направления'
+          : 'Новое направление',
       formKey: _formKey,
       isDirty: _dirty,
       onSave: _save,
@@ -123,8 +122,12 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
             helperText: 'Должно быть уникальным',
           ),
           validator: (v) {
-            final base =
-                FormValidators.length(v, min: 2, max: 100, label: 'Название');
+            final base = FormValidators.length(
+              v,
+              min: 2,
+              max: 100,
+              label: 'Название',
+            );
             if (base != null) return base;
             if (_nameServerError != null) return _nameServerError;
             return null;

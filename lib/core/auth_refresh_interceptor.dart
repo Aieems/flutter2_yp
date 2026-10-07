@@ -4,11 +4,9 @@ import '../state/auth_notifier.dart';
 
 /// Обновление access-токена при 401 (кроме /auth/).
 class AuthRefreshInterceptor extends Interceptor {
-  AuthRefreshInterceptor({
-    required AuthNotifier auth,
-    required Dio dio,
-  })  : _auth = auth,
-        _dio = dio;
+  AuthRefreshInterceptor({required AuthNotifier auth, required Dio dio})
+    : _auth = auth,
+      _dio = dio;
 
   final AuthNotifier _auth;
   final Dio _dio;

@@ -12,6 +12,7 @@ import '../widgets/delete_dialogs.dart';
 import '../widgets/entity_table.dart';
 import '../widgets/pagination_bar.dart';
 import '../models/app_role.dart';
+import '../core/breakpoints.dart';
 import '../widgets/entity_action_visibility.dart';
 import '../widgets/role_gate.dart';
 
@@ -35,7 +36,7 @@ class _PartnerListScreenState extends State<PartnerListScreen> {
   Widget build(BuildContext context) {
     final notifier = context.watch<PartnerListNotifier>();
     final q = notifier.query;
-    final useCards = MediaQuery.sizeOf(context).width < 600;
+    final useCards = !AppBreakpoints.useTableOnLists(context);
     final actionVis = EntityActionVisibility.of(context);
 
     return Scaffold(
@@ -127,7 +128,11 @@ class _PartnerListScreenState extends State<PartnerListScreen> {
                           TableColumnSpec(
                             label: 'Название',
                             sortField: 'lastName',
-                            build: (p) => Text(p.displayName),
+                            build: (p) => Text(
+                              p.displayName,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
                           ),
                           TableColumnSpec(
                             label: 'Страна',

@@ -89,7 +89,9 @@ class _CharityFundAppState extends State<CharityFundApp> {
             if (loggedOut && mounted) {
               rootScaffoldMessengerKey.currentState?.showSnackBar(
                 const SnackBar(
-                  content: Text('Сессия завершена: превышена максимальная длительность.'),
+                  content: Text(
+                    'Сессия завершена: превышена максимальная длительность.',
+                  ),
                 ),
               );
               context.go('/login');

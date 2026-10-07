@@ -50,10 +50,7 @@ class AppRepositories {
       projects,
       onStorageReset: onStorageReset,
     );
-    final tags = PersistentTagRepository(
-      prefs,
-      onStorageReset: onStorageReset,
-    );
+    final tags = PersistentTagRepository(prefs, onStorageReset: onStorageReset);
     final volunteers = PersistentVolunteerRepository(
       prefs,
       onStorageReset: onStorageReset,

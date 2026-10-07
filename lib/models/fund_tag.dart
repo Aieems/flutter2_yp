@@ -28,18 +28,18 @@ class FundTag {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'categoryId': categoryId,
-        'deletedAt': deletedAt?.toIso8601String(),
-      };
+    'id': id,
+    'name': name,
+    'categoryId': categoryId,
+    'deletedAt': deletedAt?.toIso8601String(),
+  };
 
   factory FundTag.fromJson(Map<String, dynamic> json) => FundTag(
-        id: json['id'] as int? ?? 0,
-        name: json['name'] as String? ?? '',
-        categoryId: json['categoryId'] as int? ?? 0,
-        deletedAt: json['deletedAt'] == null
-            ? null
-            : DateTime.tryParse(json['deletedAt'] as String),
-      );
+    id: json['id'] as int? ?? 0,
+    name: json['name'] as String? ?? '',
+    categoryId: json['categoryId'] as int? ?? 0,
+    deletedAt: json['deletedAt'] == null
+        ? null
+        : DateTime.tryParse(json['deletedAt'] as String),
+  );
 }

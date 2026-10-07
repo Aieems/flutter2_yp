@@ -34,8 +34,9 @@ class _TagDetailScreenState extends State<TagDetailScreen> {
     final repo = context.read<TagRepository>();
     _item = await repo.findById(widget.tagId);
     if (_item != null) {
-      final cat =
-          await context.read<CategoryRepository>().findById(_item!.categoryId);
+      final cat = await context.read<CategoryRepository>().findById(
+        _item!.categoryId,
+      );
       _categoryName = cat?.name ?? '—';
     }
     if (mounted) setState(() => _loading = false);
@@ -44,9 +45,7 @@ class _TagDetailScreenState extends State<TagDetailScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     final t = _item;
     if (t == null) {

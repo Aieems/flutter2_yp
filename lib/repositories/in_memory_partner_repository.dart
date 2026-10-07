@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 import '../data/seed_partners.dart';
 import '../models/page_result.dart';
 import '../models/partner.dart';
@@ -9,10 +11,14 @@ class InMemoryPartnerRepository implements PartnerRepository {
   int _nextId = seedPartners.length + 1;
 
   @override
-  Future<PageResult<Partner>> find(PartnerQuery q) async {
+  Future<PageResult<Partner>> find(
+    PartnerQuery q, {
+    CancelToken? cancelToken,
+  }) async {
     await Future.delayed(const Duration(milliseconds: 250));
-    var rows =
-        _partners.where((p) => q.includeDeleted || !p.isDeleted).toList();
+    var rows = _partners
+        .where((p) => q.includeDeleted || !p.isDeleted)
+        .toList();
     if (q.search.trim().isNotEmpty) {
       final needle = q.search.trim().toLowerCase();
       rows = rows
@@ -35,12 +41,7 @@ class InMemoryPartnerRepository implements PartnerRepository {
     final from = (q.page - 1) * q.size;
     final to = (from + q.size) > total ? total : (from + q.size);
     final items = from >= total ? <Partner>[] : rows.sublist(from, to);
-    return PageResult(
-      items: items,
-      page: q.page,
-      size: q.size,
-      total: total,
-    );
+    return PageResult(items: items, page: q.page, size: q.size, total: total);
   }
 
   @override

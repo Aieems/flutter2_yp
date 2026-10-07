@@ -35,9 +35,9 @@ class _LoginScreenState extends State<LoginScreen> {
     });
     try {
       await context.read<AuthNotifier>().login(
-            _username.text.trim(),
-            _password.text,
-          );
+        _username.text.trim(),
+        _password.text,
+      );
       if (!mounted) return;
       final from = GoRouterState.of(context).uri.queryParameters['from'];
       if (from != null && from.isNotEmpty) {
@@ -85,15 +85,18 @@ class _LoginScreenState extends State<LoginScreen> {
                         padding: const EdgeInsets.only(bottom: 12),
                         child: Text(
                           _error!,
-                          style: TextStyle(color: Theme.of(context).colorScheme.error),
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
                         ),
                       ),
                     TextFormField(
                       controller: _username,
                       decoration: const InputDecoration(labelText: 'Логин *'),
                       textInputAction: TextInputAction.next,
-                      validator: (v) =>
-                          (v == null || v.trim().isEmpty) ? 'Укажите логин' : null,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'Укажите логин'
+                          : null,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
@@ -102,7 +105,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       decoration: InputDecoration(
                         labelText: 'Пароль *',
                         suffixIcon: IconButton(
-                          icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
+                          icon: Icon(
+                            _obscure ? Icons.visibility : Icons.visibility_off,
+                          ),
                           onPressed: () => setState(() => _obscure = !_obscure),
                         ),
                       ),

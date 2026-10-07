@@ -17,25 +17,25 @@ class ApiProjectRepository implements ProjectRepository {
   Future<PageResult<Project>> find(
     ProjectQuery q, {
     CancelToken? cancelToken,
-  }) =>
-      guard(() async {
-        final response = await _dio.get<Map<String, dynamic>>(
-          '/projects',
-          queryParameters: {
-            if (q.search.trim().isNotEmpty) 'search': q.search.trim(),
-            if (q.tagId != null) 'tagId': q.tagId,
-            if (q.categoryId != null) 'categoryId': q.categoryId,
-            if (q.yearFrom != null) 'yearFrom': q.yearFrom,
-            if (q.yearTo != null) 'yearTo': q.yearTo,
-            'sort': '${projectSortToApi(q.sortField)},${q.sortAscending ? 'asc' : 'desc'}',
-            'page': q.page,
-            'size': q.size,
-            if (q.includeDeleted) 'includeDeleted': true,
-          },
-          cancelToken: cancelToken,
-        );
-        return parsePage(response.data!, projectFromApi);
-      });
+  }) => guard(() async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/projects',
+      queryParameters: {
+        if (q.search.trim().isNotEmpty) 'search': q.search.trim(),
+        if (q.tagId != null) 'tagId': q.tagId,
+        if (q.categoryId != null) 'categoryId': q.categoryId,
+        if (q.yearFrom != null) 'yearFrom': q.yearFrom,
+        if (q.yearTo != null) 'yearTo': q.yearTo,
+        'sort':
+            '${projectSortToApi(q.sortField)},${q.sortAscending ? 'asc' : 'desc'}',
+        'page': q.page,
+        'size': q.size,
+        if (q.includeDeleted) 'includeDeleted': true,
+      },
+      cancelToken: cancelToken,
+    );
+    return parsePage(response.data!, projectFromApi);
+  });
 
   @override
   Future<Project?> findById(int id) async {
@@ -51,39 +51,35 @@ class ApiProjectRepository implements ProjectRepository {
 
   @override
   Future<Project?> findByCode(String code) => guard(() async {
-        final response = await _dio.get<Map<String, dynamic>>(
-          '/projects',
-          queryParameters: {
-            'search': code.trim(),
-            'page': 1,
-            'size': 50,
-          },
-        );
-        final page = parsePage(response.data!, projectFromApi);
-        final key = normalizeKey(code);
-        for (final p in page.items) {
-          if (normalizeKey(p.code) == key) return p;
-        }
-        return null;
-      });
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/projects',
+      queryParameters: {'search': code.trim(), 'page': 1, 'size': 50},
+    );
+    final page = parsePage(response.data!, projectFromApi);
+    final key = normalizeKey(code);
+    for (final p in page.items) {
+      if (normalizeKey(p.code) == key) return p;
+    }
+    return null;
+  });
 
   @override
   Future<Project> create(Project project) => guard(() async {
-        final response = await _dio.post<Map<String, dynamic>>(
-          '/projects',
-          data: projectToApiBody(project),
-        );
-        return projectFromApi(response.data!);
-      });
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/projects',
+      data: projectToApiBody(project),
+    );
+    return projectFromApi(response.data!);
+  });
 
   @override
   Future<Project> update(Project project) => guard(() async {
-        final response = await _dio.put<Map<String, dynamic>>(
-          '/projects/${project.id}',
-          data: projectToApiBody(project),
-        );
-        return projectFromApi(response.data!);
-      });
+    final response = await _dio.put<Map<String, dynamic>>(
+      '/projects/${project.id}',
+      data: projectToApiBody(project),
+    );
+    return projectFromApi(response.data!);
+  });
 
   @override
   Future<void> softDelete(int id) =>
@@ -91,11 +87,8 @@ class ApiProjectRepository implements ProjectRepository {
 
   @override
   Future<void> hardDelete(int id) => guard(
-        () => _dio.delete<void>(
-          '/projects/$id',
-          queryParameters: {'hard': true},
-        ),
-      );
+    () => _dio.delete<void>('/projects/$id', queryParameters: {'hard': true}),
+  );
 
   @override
   Future<void> restore(int id) =>
@@ -103,12 +96,12 @@ class ApiProjectRepository implements ProjectRepository {
 
   @override
   Future<int> deleteMany(List<int> ids) => guard(() async {
-        final response = await _dio.post<Map<String, dynamic>>(
-          '/projects/bulk-delete',
-          data: {'ids': ids},
-        );
-        return response.data!['deleted'] as int? ?? 0;
-      });
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/projects/bulk-delete',
+      data: {'ids': ids},
+    );
+    return response.data!['deleted'] as int? ?? 0;
+  });
 
   @override
   Future<bool> isCodeTaken(String code, {int? excludeId}) async {
@@ -120,16 +113,12 @@ class ApiProjectRepository implements ProjectRepository {
 
   @override
   Future<int> countByCategoryId(int categoryId) => guard(() async {
-        final response = await _dio.get<Map<String, dynamic>>(
-          '/projects',
-          queryParameters: {
-            'categoryId': categoryId,
-            'page': 1,
-            'size': 1,
-          },
-        );
-        return response.data!['total'] as int? ?? 0;
-      });
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/projects',
+      queryParameters: {'categoryId': categoryId, 'page': 1, 'size': 1},
+    );
+    return response.data!['total'] as int? ?? 0;
+  });
 
   @override
   Future<List<Project>> listAll({bool includeDeleted = false}) =>

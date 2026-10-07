@@ -26,8 +26,9 @@ const tags = <TagRef>[
   TagRef(5, 'Региональный проект'),
 ];
 
-String categoryName(int id) =>
-    categories.firstWhere((c) => c.id == id, orElse: () => const CategoryRef(0, '—')).name;
+String categoryName(int id) => categories
+    .firstWhere((c) => c.id == id, orElse: () => const CategoryRef(0, '—'))
+    .name;
 
 String tagName(int id) =>
     tags.firstWhere((t) => t.id == id, orElse: () => const TagRef(0, '—')).name;

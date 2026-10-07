@@ -40,24 +40,24 @@ class Volunteer {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'firstName': firstName,
-        'lastName': lastName,
-        'email': email,
-        'card': card.toJson(),
-        'deletedAt': deletedAt?.toIso8601String(),
-      };
+    'id': id,
+    'firstName': firstName,
+    'lastName': lastName,
+    'email': email,
+    'card': card.toJson(),
+    'deletedAt': deletedAt?.toIso8601String(),
+  };
 
   factory Volunteer.fromJson(Map<String, dynamic> json) => Volunteer(
-        id: json['id'] as int? ?? 0,
-        firstName: json['firstName'] as String? ?? '',
-        lastName: json['lastName'] as String? ?? '',
-        email: json['email'] as String? ?? '',
-        card: VolunteerCard.fromJson(
-          (json['card'] as Map?)?.cast<String, dynamic>() ?? const {},
-        ),
-        deletedAt: json['deletedAt'] == null
-            ? null
-            : DateTime.tryParse(json['deletedAt'] as String),
-      );
+    id: json['id'] as int? ?? 0,
+    firstName: json['firstName'] as String? ?? '',
+    lastName: json['lastName'] as String? ?? '',
+    email: json['email'] as String? ?? '',
+    card: VolunteerCard.fromJson(
+      (json['card'] as Map?)?.cast<String, dynamic>() ?? const {},
+    ),
+    deletedAt: json['deletedAt'] == null
+        ? null
+        : DateTime.tryParse(json['deletedAt'] as String),
+  );
 }

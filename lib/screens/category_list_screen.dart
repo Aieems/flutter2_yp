@@ -12,6 +12,7 @@ import '../widgets/debounced_search_field.dart';
 import '../widgets/category_delete_feedback.dart';
 import '../widgets/delete_dialogs.dart';
 import '../widgets/entity_table.dart';
+import '../core/breakpoints.dart';
 import '../widgets/entity_action_visibility.dart';
 import '../widgets/pagination_bar.dart';
 import '../widgets/role_gate.dart';
@@ -37,7 +38,7 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
   Widget build(BuildContext context) {
     final notifier = context.watch<CategoryListNotifier>();
     final q = notifier.query;
-    final useCards = MediaQuery.sizeOf(context).width < 600;
+    final useCards = !AppBreakpoints.useTableOnLists(context);
     final actionVis = EntityActionVisibility.of(context);
 
     return Scaffold(
@@ -123,8 +124,9 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
                         onSort: (f) => _pushQuery(
                           q.copyWith(
                             sortField: f,
-                            sortAscending:
-                                f == q.sortField ? !q.sortAscending : true,
+                            sortAscending: f == q.sortField
+                                ? !q.sortAscending
+                                : true,
                           ),
                         ),
                         columns: [
@@ -162,8 +164,8 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
                                 }
                                 await tryDeleteCategory(
                                   context,
-                                  repository:
-                                      context.read<CategoryRepository>(),
+                                  repository: context
+                                      .read<CategoryRepository>(),
                                   categoryId: c.id,
                                   categoryName: c.name,
                                   onSuccess: () async {

@@ -28,8 +28,7 @@ class SimpleListQuery {
   }) {
     return SimpleListQuery(
       search: search ?? this.search,
-      categoryId:
-          categoryId == _unset ? this.categoryId : categoryId as int?,
+      categoryId: categoryId == _unset ? this.categoryId : categoryId as int?,
       sortField: sortField ?? this.sortField,
       sortAscending: sortAscending ?? this.sortAscending,
       page: page ?? 1,

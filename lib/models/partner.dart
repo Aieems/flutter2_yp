@@ -38,22 +38,22 @@ class Partner {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'lastName': lastName,
-        'firstName': firstName,
-        'country': country,
-        'birthYear': birthYear,
-        'deletedAt': deletedAt?.toIso8601String(),
-      };
+    'id': id,
+    'lastName': lastName,
+    'firstName': firstName,
+    'country': country,
+    'birthYear': birthYear,
+    'deletedAt': deletedAt?.toIso8601String(),
+  };
 
   factory Partner.fromJson(Map<String, dynamic> json) => Partner(
-        id: json['id'] as int? ?? 0,
-        lastName: json['lastName'] as String? ?? '',
-        firstName: json['firstName'] as String? ?? '',
-        country: json['country'] as String? ?? '',
-        birthYear: json['birthYear'] as int? ?? 0,
-        deletedAt: json['deletedAt'] == null
-            ? null
-            : DateTime.tryParse(json['deletedAt'] as String),
-      );
+    id: json['id'] as int? ?? 0,
+    lastName: json['lastName'] as String? ?? '',
+    firstName: json['firstName'] as String? ?? '',
+    country: json['country'] as String? ?? '',
+    birthYear: json['birthYear'] as int? ?? 0,
+    deletedAt: json['deletedAt'] == null
+        ? null
+        : DateTime.tryParse(json['deletedAt'] as String),
+  );
 }

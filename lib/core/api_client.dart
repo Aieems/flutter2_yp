@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'api_exceptions.dart';
 import 'config.dart';
 
-Dio buildDio({String? Function()? tokenProvider}) {
+Dio buildDio({String? Function()? tokenProvider, bool enableReadRetry = true}) {
   final dio = Dio(
     BaseOptions(
       baseUrl: apiBaseUrl,
@@ -49,16 +49,16 @@ Dio buildDio({String? Function()? tokenProvider}) {
       },
       onError: (error, handler) {
         if (kDebugMode) {
-          debugPrint(
-            '[API] сбой ${error.requestOptions.uri}: ${error.type}',
-          );
+          debugPrint('[API] сбой ${error.requestOptions.uri}: ${error.type}');
         }
         return handler.next(error);
       },
     ),
   );
 
-  dio.interceptors.add(_ReadRetryInterceptor(dio));
+  if (enableReadRetry) {
+    dio.interceptors.add(_ReadRetryInterceptor(dio));
+  }
   return dio;
 }
 

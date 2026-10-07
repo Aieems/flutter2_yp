@@ -1,4 +1,4 @@
-# Клиент благотворительного фонда (ПР2–ПР5)
+# Клиент благотворительного фонда (ПР2–ПР6)
 
 ## ПР4 — REST API
 
@@ -54,3 +54,18 @@ node mock-server.js --port 8080 --origin http://localhost:5555 --ttl 60
 Отчёт и демо п.17: [docs/PR5-otchet-kratko.md](docs/PR5-otchet-kratko.md).
 
 Тесты: `flutter test test/role_access_test.dart`
+
+## ПР6 — адаптив, сборка, GitHub Pages
+
+Адаптив: `lib/core/breakpoints.dart`, `AdaptiveAppShell` (низ &lt;768, rail ≥768, таблицы ≥1280).
+
+```bash
+flutter build web --release --base-href /flutter_2/
+cp build/web/index.html build/web/404.html
+flutter build web --release --wasm
+flutter test
+flutter analyze
+dart format lib test
+```
+
+CI: `.github/workflows/deploy-web.yml`. Краткий отчёт: [docs/PR6-otchet-kratko.md](docs/PR6-otchet-kratko.md).

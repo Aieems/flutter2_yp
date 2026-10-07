@@ -11,11 +11,7 @@ import '../state/simple_entity_notifiers.dart';
 import 'query_params.dart';
 
 class ProjectQuerySync extends StatefulWidget {
-  const ProjectQuerySync({
-    super.key,
-    required this.uri,
-    required this.child,
-  });
+  const ProjectQuerySync({super.key, required this.uri, required this.child});
 
   final Uri uri;
   final Widget child;
@@ -70,11 +66,7 @@ class _ProjectQuerySyncState extends State<ProjectQuerySync> {
 }
 
 class PartnerQuerySync extends StatefulWidget {
-  const PartnerQuerySync({
-    super.key,
-    required this.uri,
-    required this.child,
-  });
+  const PartnerQuerySync({super.key, required this.uri, required this.child});
 
   final Uri uri;
   final Widget child;
@@ -125,11 +117,7 @@ class _PartnerQuerySyncState extends State<PartnerQuerySync> {
 }
 
 class CategoryQuerySync extends StatefulWidget {
-  const CategoryQuerySync({
-    super.key,
-    required this.uri,
-    required this.child,
-  });
+  const CategoryQuerySync({super.key, required this.uri, required this.child});
 
   final Uri uri;
   final Widget child;
@@ -172,11 +160,7 @@ class _CategoryQuerySyncState extends State<CategoryQuerySync> {
 }
 
 class TagQuerySync extends StatefulWidget {
-  const TagQuerySync({
-    super.key,
-    required this.uri,
-    required this.child,
-  });
+  const TagQuerySync({super.key, required this.uri, required this.child});
 
   final Uri uri;
   final Widget child;
@@ -219,11 +203,7 @@ class _TagQuerySyncState extends State<TagQuerySync> {
 }
 
 class VolunteerQuerySync extends StatefulWidget {
-  const VolunteerQuerySync({
-    super.key,
-    required this.uri,
-    required this.child,
-  });
+  const VolunteerQuerySync({super.key, required this.uri, required this.child});
 
   final Uri uri;
   final Widget child;

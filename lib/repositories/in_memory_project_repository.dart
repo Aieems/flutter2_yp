@@ -17,8 +17,9 @@ class InMemoryProjectRepository implements ProjectRepository {
     CancelToken? cancelToken,
   }) async {
     await Future.delayed(const Duration(milliseconds: 250));
-    var rows =
-        _projects.where((p) => q.includeDeleted || !p.isDeleted).toList();
+    var rows = _projects
+        .where((p) => q.includeDeleted || !p.isDeleted)
+        .toList();
     if (q.search.trim() == '!!!error') {
       throw StateError('Демонстрация ошибки загрузки');
     }
@@ -56,12 +57,7 @@ class InMemoryProjectRepository implements ProjectRepository {
     final from = (q.page - 1) * q.size;
     final to = (from + q.size) > total ? total : (from + q.size);
     final items = from >= total ? <Project>[] : rows.sublist(from, to);
-    return PageResult(
-      items: items,
-      page: q.page,
-      size: q.size,
-      total: total,
-    );
+    return PageResult(items: items, page: q.page, size: q.size, total: total);
   }
 
   @override

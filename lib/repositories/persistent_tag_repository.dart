@@ -12,13 +12,13 @@ class PersistentTagRepository implements TagRepository {
     SharedPreferences prefs, {
     void Function(String message)? onStorageReset,
   }) : _storage = JsonListStorage<FundTag>(
-          prefs: prefs,
-          storageKey: 'tags_v1',
-          fromJson: FundTag.fromJson,
-          toJson: (t) => t.toJson(),
-          seed: buildSeedTags,
-          onReset: onStorageReset,
-        ) {
+         prefs: prefs,
+         storageKey: 'tags_v1',
+         fromJson: FundTag.fromJson,
+         toJson: (t) => t.toJson(),
+         seed: buildSeedTags,
+         onReset: onStorageReset,
+       ) {
     _items = _storage.load();
     _nextId = _items.isEmpty
         ? 1
@@ -53,12 +53,7 @@ class PersistentTagRepository implements TagRepository {
     final from = (q.page - 1) * q.size;
     final to = (from + q.size) > total ? total : (from + q.size);
     final items = from >= total ? <FundTag>[] : rows.sublist(from, to);
-    return PageResult(
-      items: items,
-      page: q.page,
-      size: q.size,
-      total: total,
-    );
+    return PageResult(items: items, page: q.page, size: q.size, total: total);
   }
 
   @override

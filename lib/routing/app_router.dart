@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
-
 import '../auth/route_access.dart';
 import '../models/app_role.dart';
-import '../screens/admin/admin_stats_screen.dart';
-import '../screens/admin/admin_users_screen.dart';
+import '../screens/admin/admin_screens_deferred.dart';
 import '../screens/auth/forbidden_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
@@ -25,6 +22,7 @@ import '../screens/tag_list_screen.dart';
 import '../screens/volunteer_detail_screen.dart';
 import '../screens/volunteer_list_screen.dart';
 import '../state/auth_notifier.dart';
+import '../widgets/adaptive_app_shell.dart';
 import 'query_sync.dart';
 
 GoRouter buildAppRouter(AuthNotifier auth) {
@@ -53,7 +51,7 @@ GoRouter buildAppRouter(AuthNotifier auth) {
       GoRoute(path: '/register', builder: (c, s) => const RegisterScreen()),
       GoRoute(path: '/forbidden', builder: (c, s) => const ForbiddenScreen()),
       ShellRoute(
-        builder: (context, state, child) => _AppShell(child: child),
+        builder: (context, state, child) => AdaptiveAppShell(child: child),
         routes: [
           GoRoute(
             path: '/projects',
@@ -156,15 +154,10 @@ GoRouter buildAppRouter(AuthNotifier auth) {
             path: '/tags',
             redirect: (c, s) =>
                 auth.has(AppRole.coordinator) ? null : '/forbidden',
-            builder: (context, state) => TagQuerySync(
-              uri: state.uri,
-              child: const TagListScreen(),
-            ),
+            builder: (context, state) =>
+                TagQuerySync(uri: state.uri, child: const TagListScreen()),
             routes: [
-              GoRoute(
-                path: 'new',
-                builder: (c, s) => const TagFormScreen(),
-              ),
+              GoRoute(path: 'new', builder: (c, s) => const TagFormScreen()),
               GoRoute(
                 path: ':id',
                 builder: (c, s) {
@@ -217,132 +210,15 @@ GoRouter buildAppRouter(AuthNotifier auth) {
           GoRoute(
             path: '/admin/users',
             redirect: (c, s) => auth.has(AppRole.admin) ? null : '/forbidden',
-            builder: (c, s) => const AdminUsersScreen(),
+            builder: (c, s) => const DeferredAdminUsersScreen(),
           ),
           GoRoute(
             path: '/admin/stats',
             redirect: (c, s) => auth.has(AppRole.admin) ? null : '/forbidden',
-            builder: (c, s) => const AdminStatsScreen(),
+            builder: (c, s) => const DeferredAdminStatsScreen(),
           ),
         ],
       ),
     ],
   );
-}
-
-class _AppShell extends StatelessWidget {
-  const _AppShell({required this.child});
-
-  final Widget child;
-
-  List<String> _navPaths(AppRole role) => [
-        if (RouteAccess.showNavSection(role, 'projects')) '/projects',
-        if (RouteAccess.showNavSection(role, 'partners')) '/partners',
-        if (RouteAccess.showNavSection(role, 'categories')) '/categories',
-        if (RouteAccess.showNavSection(role, 'tags')) '/tags',
-        if (RouteAccess.showNavSection(role, 'volunteers')) '/volunteers',
-      ];
-
-  int? _selectedIndex(BuildContext context, AppRole role) {
-    final path = GoRouterState.of(context).uri.path;
-    if (path.startsWith('/admin')) return null;
-    final paths = _navPaths(role);
-    for (var i = 0; i < paths.length; i++) {
-      if (path.startsWith(paths[i])) return i;
-    }
-    return paths.isEmpty ? null : 0;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final auth = context.watch<AuthNotifier>();
-    final role = auth.user!.role;
-    final index = _selectedIndex(context, role);
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Благотворительный фонд'),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Center(
-              child: Text('${auth.user!.displayName} · ${role.label}'),
-            ),
-          ),
-          if (RouteAccess.canAdminister(role))
-            IconButton(
-              tooltip: 'Пользователи',
-              icon: const Icon(Icons.admin_panel_settings_outlined),
-              onPressed: () => context.go('/admin/users'),
-            ),
-          if (RouteAccess.canAdminister(role))
-            IconButton(
-              tooltip: 'Статистика',
-              icon: const Icon(Icons.insights_outlined),
-              onPressed: () => context.go('/admin/stats'),
-            ),
-          IconButton(
-            tooltip: 'Перечитать профиль из localStorage (после правки в DevTools)',
-            icon: const Icon(Icons.refresh),
-            onPressed: () => auth.reloadUiProfileFromStorage(),
-          ),
-          IconButton(
-            tooltip: 'Выход',
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await auth.logout();
-              if (context.mounted) context.go('/login');
-            },
-          ),
-        ],
-      ),
-      body: Row(
-        children: [
-          if (index != null)
-            NavigationRail(
-              selectedIndex: index,
-              onDestinationSelected: (i) {
-                final paths = _navPaths(role);
-                if (i >= 0 && i < paths.length) context.go(paths[i]);
-              },
-              labelType: NavigationRailLabelType.all,
-              destinations: [
-                if (RouteAccess.showNavSection(role, 'projects'))
-                  const NavigationRailDestination(
-                    icon: Icon(Icons.volunteer_activism_outlined),
-                    selectedIcon: Icon(Icons.volunteer_activism),
-                    label: Text('Проекты'),
-                  ),
-                if (RouteAccess.showNavSection(role, 'partners'))
-                  const NavigationRailDestination(
-                    icon: Icon(Icons.handshake_outlined),
-                    selectedIcon: Icon(Icons.handshake),
-                    label: Text('Партнёры'),
-                  ),
-                if (RouteAccess.showNavSection(role, 'categories'))
-                  const NavigationRailDestination(
-                    icon: Icon(Icons.category_outlined),
-                    selectedIcon: Icon(Icons.category),
-                    label: Text('Направления'),
-                  ),
-                if (RouteAccess.showNavSection(role, 'tags'))
-                  const NavigationRailDestination(
-                    icon: Icon(Icons.label_outlined),
-                    selectedIcon: Icon(Icons.label),
-                    label: Text('Теги'),
-                  ),
-                if (RouteAccess.showNavSection(role, 'volunteers'))
-                  const NavigationRailDestination(
-                    icon: Icon(Icons.people_outline),
-                    selectedIcon: Icon(Icons.people),
-                    label: Text('Волонтёры'),
-                  ),
-              ],
-            ),
-          if (index != null) const VerticalDivider(width: 1),
-          Expanded(child: child),
-        ],
-      ),
-    );
-  }
 }

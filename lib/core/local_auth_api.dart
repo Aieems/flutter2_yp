@@ -15,7 +15,12 @@ class _SeedUser {
 class LocalAuthApi {
   static const _users = [
     _SeedUser('volunteer1', 'VolunteeR1!', AppRole.volunteer, 'Иван Волонтёр'),
-    _SeedUser('coord1', 'Coordinat0r!', AppRole.coordinator, 'Мария Координатор'),
+    _SeedUser(
+      'coord1',
+      'Coordinat0r!',
+      AppRole.coordinator,
+      'Мария Координатор',
+    ),
     _SeedUser('admin', 'Admin123!', AppRole.admin, 'Администратор'),
   ];
 
@@ -105,23 +110,25 @@ class LocalAuthApi {
   }
 
   Future<List<AppUser>> listUsers() async => [
-        for (var i = 0; i < _users.length; i++)
-          AppUser(
-            id: i + 1,
-            username: _users[i].username,
-            displayName: _users[i].name,
-            role: _users[i].role,
-          ),
-      ];
+    for (var i = 0; i < _users.length; i++)
+      AppUser(
+        id: i + 1,
+        username: _users[i].username,
+        displayName: _users[i].name,
+        role: _users[i].role,
+      ),
+  ];
 
   Future<AppUser> updateUserRole(int id, String role) async {
-    throw const ForbiddenException('Смена ролей доступна только с API-сервером.');
+    throw const ForbiddenException(
+      'Смена ролей доступна только с API-сервером.',
+    );
   }
 
   Future<Map<String, int>> stats() async => {
-        'projects': 12,
-        'partners': 8,
-        'volunteers': 4,
-        'categories': 5,
-      };
+    'projects': 12,
+    'partners': 8,
+    'volunteers': 4,
+    'categories': 5,
+  };
 }

@@ -31,9 +31,7 @@ class JsonListStorage<T> {
     }
     try {
       final list = jsonDecode(raw) as List;
-      return list
-          .map((e) => fromJson(e as Map<String, dynamic>))
-          .toList();
+      return list.map((e) => fromJson(e as Map<String, dynamic>)).toList();
     } catch (_) {
       final initial = seed();
       persist(initial);
@@ -55,9 +53,7 @@ class JsonListStorage<T> {
     if (raw == null) return null;
     try {
       final list = jsonDecode(raw) as List;
-      return list
-          .map((e) => fromJson(e as Map<String, dynamic>))
-          .toList();
+      return list.map((e) => fromJson(e as Map<String, dynamic>)).toList();
     } catch (_) {
       return null;
     }

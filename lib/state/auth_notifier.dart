@@ -14,6 +14,7 @@ class AuthNotifier extends ChangeNotifier {
   static const kRefresh = 'auth_refresh_token';
   static const kSessionStarted = 'auth_session_started_ms';
   static const kLastActivity = 'auth_last_activity_ms';
+
   /// Снимок профиля для UI (роль на клиенте; сервер берёт роль из токена).
   static const kUiProfile = 'auth_ui_profile';
 
@@ -21,9 +22,9 @@ class AuthNotifier extends ChangeNotifier {
     required SharedPreferences prefs,
     AuthApi? authApi,
     LocalAuthApi? localAuthApi,
-  })  : _prefs = prefs,
-        _authApi = authApi,
-        _localAuthApi = localAuthApi ?? LocalAuthApi();
+  }) : _prefs = prefs,
+       _authApi = authApi,
+       _localAuthApi = localAuthApi ?? LocalAuthApi();
 
   final SharedPreferences _prefs;
   final AuthApi? _authApi;
@@ -147,7 +148,8 @@ class AuthNotifier extends ChangeNotifier {
     if (!isAuthenticated) return false;
     final last = _prefs.getInt(kLastActivity);
     if (last == null) return false;
-    return DateTime.now().millisecondsSinceEpoch - last > timeout.inMilliseconds;
+    return DateTime.now().millisecondsSinceEpoch - last >
+        timeout.inMilliseconds;
   }
 
   Future<void> _applyTokens(AuthTokens result) async {

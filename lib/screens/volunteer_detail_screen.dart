@@ -29,17 +29,16 @@ class _VolunteerDetailScreenState extends State<VolunteerDetailScreen> {
   }
 
   Future<void> _load() async {
-    _volunteer =
-        await context.read<VolunteerRepository>().findById(widget.volunteerId);
+    _volunteer = await context.read<VolunteerRepository>().findById(
+      widget.volunteerId,
+    );
     if (mounted) setState(() => _loading = false);
   }
 
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     final v = _volunteer;
     if (v == null) {
@@ -68,7 +67,9 @@ class _VolunteerDetailScreenState extends State<VolunteerDetailScreen> {
             Text('Email: ${v.email}'),
             const SizedBox(height: 8),
             Text('Билет: ${v.card.cardNumber}'),
-            Text('Выдан: ${v.card.issuedAt.toIso8601String().split('T').first}'),
+            Text(
+              'Выдан: ${v.card.issuedAt.toIso8601String().split('T').first}',
+            ),
             Text(
               'Действует до: ${v.card.expiresAt.toIso8601String().split('T').first}',
             ),
@@ -98,7 +99,10 @@ class _VolunteerDetailScreenState extends State<VolunteerDetailScreen> {
                   builder: (context) => !v.isDeleted
                       ? FilledButton.icon(
                           onPressed: () async {
-                            if (await confirmSoftDelete(context, v.displayName)) {
+                            if (await confirmSoftDelete(
+                              context,
+                              v.displayName,
+                            )) {
                               try {
                                 await repo.softDelete(v.id);
                                 if (context.mounted) context.pop();

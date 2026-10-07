@@ -59,7 +59,10 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                   onChanged: (role) async {
                     if (role == null || role == u.role) return;
                     try {
-                      await context.read<AuthNotifier>().updateUserRole(u.id, role);
+                      await context.read<AuthNotifier>().updateUserRole(
+                        u.id,
+                        role,
+                      );
                       setState(_reload);
                     } catch (e) {
                       if (context.mounted) showApiError(context, e);

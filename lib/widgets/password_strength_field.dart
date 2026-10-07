@@ -10,6 +10,8 @@ class PasswordStrengthField extends StatefulWidget {
   final TextEditingController controller;
   final ValueChanged<bool> onStrengthChanged;
 
+  static bool isStrong(String value) => _PasswordStrengthFieldState.checkStrong(value);
+
   @override
   State<PasswordStrengthField> createState() => _PasswordStrengthFieldState();
 }
@@ -17,7 +19,7 @@ class PasswordStrengthField extends StatefulWidget {
 class _PasswordStrengthFieldState extends State<PasswordStrengthField> {
   bool _obscure = true;
 
-  static bool isStrong(String value) {
+  static bool checkStrong(String value) {
     if (value.length < 8) return false;
     if (!RegExp(r'\d').hasMatch(value)) return false;
     if (!RegExp(r'[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\;/`~]').hasMatch(value)) {
@@ -34,7 +36,7 @@ class _PasswordStrengthFieldState extends State<PasswordStrengthField> {
         TextFormField(
           controller: widget.controller,
           obscureText: _obscure,
-          onChanged: (v) => widget.onStrengthChanged(isStrong(v)),
+          onChanged: (v) => widget.onStrengthChanged(checkStrong(v)),
           decoration: InputDecoration(
             labelText: 'Пароль *',
             suffixIcon: IconButton(
@@ -44,7 +46,7 @@ class _PasswordStrengthFieldState extends State<PasswordStrengthField> {
           ),
           validator: (v) {
             if (v == null || v.isEmpty) return 'Укажите пароль';
-            if (!isStrong(v)) return 'Пароль не соответствует требованиям';
+            if (!checkStrong(v)) return 'Пароль не соответствует требованиям';
             return null;
           },
         ),

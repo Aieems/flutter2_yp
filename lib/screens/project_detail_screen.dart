@@ -42,9 +42,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       final repo = context.read<ProjectRepository>();
       _project = await repo.findById(widget.projectId);
       if (_project != null) {
-        final cat = await context
-            .read<CategoryRepository>()
-            .findById(_project!.categoryId);
+        final cat = await context.read<CategoryRepository>().findById(
+          _project!.categoryId,
+        );
         _categoryName = cat?.name ?? '—';
         final allTags = await context.read<TagRepository>().listForSelect();
         _tagNames = allTags
@@ -115,7 +115,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Код: ${p.code}', style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              'Код: ${p.code}',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 8),
             Text('Год запуска: ${p.year}'),
             Text('Направление: $_categoryName'),

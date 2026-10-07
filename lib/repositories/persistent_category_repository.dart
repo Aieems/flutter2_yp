@@ -15,13 +15,13 @@ class PersistentCategoryRepository implements CategoryRepository {
     this._projects, {
     void Function(String message)? onStorageReset,
   }) : _storage = JsonListStorage<FundCategory>(
-          prefs: prefs,
-          storageKey: 'categories_v1',
-          fromJson: FundCategory.fromJson,
-          toJson: (c) => c.toJson(),
-          seed: buildSeedCategories,
-          onReset: onStorageReset,
-        ) {
+         prefs: prefs,
+         storageKey: 'categories_v1',
+         fromJson: FundCategory.fromJson,
+         toJson: (c) => c.toJson(),
+         seed: buildSeedCategories,
+         onReset: onStorageReset,
+       ) {
     _items = _storage.load();
     _nextId = _items.isEmpty
         ? 1
@@ -51,9 +51,7 @@ class PersistentCategoryRepository implements CategoryRepository {
     var rows = _items.where((c) => q.includeDeleted || !c.isDeleted).toList();
     if (q.search.trim().isNotEmpty) {
       final needle = q.search.trim().toLowerCase();
-      rows = rows
-          .where((c) => c.name.toLowerCase().contains(needle))
-          .toList();
+      rows = rows.where((c) => c.name.toLowerCase().contains(needle)).toList();
     }
     rows.sort((a, b) {
       final result = a.name.toLowerCase().compareTo(b.name.toLowerCase());
@@ -63,12 +61,7 @@ class PersistentCategoryRepository implements CategoryRepository {
     final from = (q.page - 1) * q.size;
     final to = (from + q.size) > total ? total : (from + q.size);
     final items = from >= total ? <FundCategory>[] : rows.sublist(from, to);
-    return PageResult(
-      items: items,
-      page: q.page,
-      size: q.size,
-      total: total,
-    );
+    return PageResult(items: items, page: q.page, size: q.size, total: total);
   }
 
   @override
@@ -116,9 +109,7 @@ class PersistentCategoryRepository implements CategoryRepository {
   Future<FundCategory> create(FundCategory item) async {
     _refreshItemsFromPrefs();
     if (await isNameTaken(item.name)) {
-      throw StateError(
-        'Направление «${item.name.trim()}» уже существует',
-      );
+      throw StateError('Направление «${item.name.trim()}» уже существует');
     }
     final created = FundCategory(id: _nextId++, name: item.name.trim());
     _items.add(created);
@@ -132,9 +123,7 @@ class PersistentCategoryRepository implements CategoryRepository {
     final i = _items.indexWhere((c) => c.id == item.id);
     if (i == -1) throw StateError('Направление ${item.id} не найдено');
     if (await isNameTaken(item.name, excludeId: item.id)) {
-      throw StateError(
-        'Направление «${item.name.trim()}» уже существует',
-      );
+      throw StateError('Направление «${item.name.trim()}» уже существует');
     }
     _items[i] = item.copyWith(name: item.name.trim());
     await _save();

@@ -31,7 +31,10 @@ Future<void> main() async {
 
   late final AuthNotifier auth;
   final dio = buildDio(tokenProvider: () => auth.accessToken);
-  auth = AuthNotifier(prefs: prefs, authApi: useApiRepositories ? AuthApi(dio) : null);
+  auth = AuthNotifier(
+    prefs: prefs,
+    authApi: useApiRepositories ? AuthApi(dio) : null,
+  );
   dio.interceptors.add(AuthRefreshInterceptor(auth: auth, dio: dio));
 
   final AppRepositories repos;

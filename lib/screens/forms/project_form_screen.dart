@@ -100,14 +100,17 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
   Future<void> _loadRelationOptions() async {
     _categories = await context.read<CategoryRepository>().listForSelect();
     _tagOptions = await context.read<TagRepository>().listForSelect(
-          categoryId: _categoryId,
-        );
+      categoryId: _categoryId,
+    );
     _partnerOptions = await context.read<PartnerRepository>().listForSelect(
-          categoryId: _categoryId,
-        );
-    _tagIds = _tagIds.where((id) => _tagOptions.any((t) => t.id == id)).toList();
-    _partnerIds =
-        _partnerIds.where((id) => _partnerOptions.any((p) => p.id == id)).toList();
+      categoryId: _categoryId,
+    );
+    _tagIds = _tagIds
+        .where((id) => _tagOptions.any((t) => t.id == id))
+        .toList();
+    _partnerIds = _partnerIds
+        .where((id) => _partnerOptions.any((p) => p.id == id))
+        .toList();
     if (mounted) setState(() {});
   }
 
@@ -182,9 +185,9 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
 
   void _showSnackBar(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _showIsbnError(String message) {
@@ -231,14 +234,17 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
           },
         ),
         const SizedBox(height: 12),
-        TextFormField(
-          controller: _yearCtrl,
-          decoration: const InputDecoration(
-            labelText: 'Год запуска',
-            border: OutlineInputBorder(),
+        SizedBox(
+          width: 160,
+          child: TextFormField(
+            controller: _yearCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Год запуска',
+              border: OutlineInputBorder(),
+            ),
+            keyboardType: TextInputType.number,
+            validator: FormValidators.year,
           ),
-          keyboardType: TextInputType.number,
-          validator: FormValidators.year,
         ),
         const SizedBox(height: 12),
         TextFormField(
@@ -258,9 +264,7 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
             border: OutlineInputBorder(),
           ),
           items: _categories
-              .map(
-                (c) => DropdownMenuItem(value: c.id, child: Text(c.name)),
-              )
+              .map((c) => DropdownMenuItem(value: c.id, child: Text(c.name)))
               .toList(),
           onChanged: _onCategoryChanged,
           validator: (v) => v == null ? 'Выберите направление' : null,

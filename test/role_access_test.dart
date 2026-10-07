@@ -6,19 +6,40 @@ void main() {
   group('RouteAccess', () {
     test('волонтёр видит проекты и партнёров', () {
       expect(RouteAccess.canAccessPath(AppRole.volunteer, '/projects'), isTrue);
-      expect(RouteAccess.canAccessPath(AppRole.volunteer, '/partners/1'), isTrue);
+      expect(
+        RouteAccess.canAccessPath(AppRole.volunteer, '/partners/1'),
+        isTrue,
+      );
     });
 
     test('волонтёр не попадает в справочники и формы', () {
-      expect(RouteAccess.canAccessPath(AppRole.volunteer, '/categories'), isFalse);
-      expect(RouteAccess.canAccessPath(AppRole.volunteer, '/projects/new'), isFalse);
-      expect(RouteAccess.canAccessPath(AppRole.volunteer, '/volunteers'), isFalse);
+      expect(
+        RouteAccess.canAccessPath(AppRole.volunteer, '/categories'),
+        isFalse,
+      );
+      expect(
+        RouteAccess.canAccessPath(AppRole.volunteer, '/projects/new'),
+        isFalse,
+      );
+      expect(
+        RouteAccess.canAccessPath(AppRole.volunteer, '/volunteers'),
+        isFalse,
+      );
     });
 
     test('координатор управляет сущностями, но не админкой', () {
-      expect(RouteAccess.canAccessPath(AppRole.coordinator, '/tags/new'), isTrue);
-      expect(RouteAccess.canAccessPath(AppRole.coordinator, '/admin/users'), isFalse);
-      expect(RouteAccess.canAccessPath(AppRole.coordinator, '/admin/stats'), isFalse);
+      expect(
+        RouteAccess.canAccessPath(AppRole.coordinator, '/tags/new'),
+        isTrue,
+      );
+      expect(
+        RouteAccess.canAccessPath(AppRole.coordinator, '/admin/users'),
+        isFalse,
+      );
+      expect(
+        RouteAccess.canAccessPath(AppRole.coordinator, '/admin/stats'),
+        isFalse,
+      );
     });
 
     test('администратор видит админ-разделы', () {

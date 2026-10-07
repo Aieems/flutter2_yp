@@ -13,13 +13,13 @@ class PersistentVolunteerRepository implements VolunteerRepository {
     SharedPreferences prefs, {
     void Function(String message)? onStorageReset,
   }) : _storage = JsonListStorage<Volunteer>(
-          prefs: prefs,
-          storageKey: 'volunteers_v1',
-          fromJson: Volunteer.fromJson,
-          toJson: (v) => v.toJson(),
-          seed: buildSeedVolunteers,
-          onReset: onStorageReset,
-        ) {
+         prefs: prefs,
+         storageKey: 'volunteers_v1',
+         fromJson: Volunteer.fromJson,
+         toJson: (v) => v.toJson(),
+         seed: buildSeedVolunteers,
+         onReset: onStorageReset,
+       ) {
     _items = _storage.load();
     _nextId = _items.isEmpty
         ? 1
@@ -49,8 +49,9 @@ class PersistentVolunteerRepository implements VolunteerRepository {
     rows.sort((a, b) {
       final result = switch (q.sortField) {
         'email' => a.email.toLowerCase().compareTo(b.email.toLowerCase()),
-        'firstName' =>
-          a.firstName.toLowerCase().compareTo(b.firstName.toLowerCase()),
+        'firstName' => a.firstName.toLowerCase().compareTo(
+          b.firstName.toLowerCase(),
+        ),
         _ => a.lastName.toLowerCase().compareTo(b.lastName.toLowerCase()),
       };
       return q.sortAscending ? result : -result;
@@ -59,12 +60,7 @@ class PersistentVolunteerRepository implements VolunteerRepository {
     final from = (q.page - 1) * q.size;
     final to = (from + q.size) > total ? total : (from + q.size);
     final items = from >= total ? <Volunteer>[] : rows.sublist(from, to);
-    return PageResult(
-      items: items,
-      page: q.page,
-      size: q.size,
-      total: total,
-    );
+    return PageResult(items: items, page: q.page, size: q.size, total: total);
   }
 
   @override

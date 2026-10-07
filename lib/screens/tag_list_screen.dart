@@ -13,6 +13,7 @@ import '../widgets/debounced_search_field.dart';
 import '../widgets/delete_dialogs.dart';
 import '../widgets/entity_table.dart';
 import '../models/app_role.dart';
+import '../core/breakpoints.dart';
 import '../widgets/entity_action_visibility.dart';
 import '../widgets/pagination_bar.dart';
 import '../widgets/role_gate.dart';
@@ -43,10 +44,7 @@ class _TagListScreenState extends State<TagListScreen> {
   }
 
   void _pushQuery(SimpleListQuery q) {
-    final uri = Uri(
-      path: '/tags',
-      queryParameters: simpleListQueryToParams(q),
-    );
+    final uri = Uri(path: '/tags', queryParameters: simpleListQueryToParams(q));
     context.go(uri.toString());
   }
 
@@ -54,7 +52,7 @@ class _TagListScreenState extends State<TagListScreen> {
   Widget build(BuildContext context) {
     final notifier = context.watch<TagListNotifier>();
     final q = notifier.query;
-    final useCards = MediaQuery.sizeOf(context).width < 600;
+    final useCards = !AppBreakpoints.useTableOnLists(context);
     final categoryNames = {for (final c in _categories) c.id: c.name};
     final actionVis = EntityActionVisibility.of(context);
 
@@ -140,9 +138,7 @@ class _TagListScreenState extends State<TagListScreen> {
                                     )
                                   : null,
                               title: Text(t.name),
-                              subtitle: Text(
-                                categoryNames[t.categoryId] ?? '',
-                              ),
+                              subtitle: Text(categoryNames[t.categoryId] ?? ''),
                               onTap: () => context.go('/tags/${t.id}'),
                             ),
                           );
@@ -160,8 +156,9 @@ class _TagListScreenState extends State<TagListScreen> {
                         onSort: (f) => _pushQuery(
                           q.copyWith(
                             sortField: f,
-                            sortAscending:
-                                f == q.sortField ? !q.sortAscending : true,
+                            sortAscending: f == q.sortField
+                                ? !q.sortAscending
+                                : true,
                           ),
                         ),
                         columns: [

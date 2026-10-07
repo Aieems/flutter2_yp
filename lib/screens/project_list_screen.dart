@@ -16,6 +16,7 @@ import '../widgets/delete_dialogs.dart';
 import '../widgets/entity_table.dart';
 import '../widgets/pagination_bar.dart';
 import '../models/app_role.dart';
+import '../core/breakpoints.dart';
 import '../widgets/entity_action_visibility.dart';
 import '../widgets/role_gate.dart';
 
@@ -64,8 +65,7 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
   Widget build(BuildContext context) {
     final notifier = context.watch<ProjectListNotifier>();
     final q = notifier.query;
-    final width = MediaQuery.sizeOf(context).width;
-    final useCards = width < 600;
+    final useCards = !AppBreakpoints.useTableOnLists(context);
     final actionVis = EntityActionVisibility.of(context);
 
     return Scaffold(
@@ -116,8 +116,7 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
             DebouncedSearchField(
               initialValue: q.search,
               hint: 'Название или код проекта',
-              onChanged: (text) =>
-                  _pushQuery(q.copyWith(search: text)),
+              onChanged: (text) => _pushQuery(q.copyWith(search: text)),
             ),
             const SizedBox(height: 12),
             ExpansionTile(
@@ -291,7 +290,11 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                           TableColumnSpec(
                             label: 'Название',
                             sortField: 'title',
-                            build: (p) => Text(p.title),
+                            build: (p) => Text(
+                              p.title,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
                           ),
                           TableColumnSpec(
                             label: 'Год',
@@ -309,11 +312,13 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                         actions: (p) => [
                           if (actionVis.canManage)
                             IconButton(
+                              tooltip: 'Редактировать',
                               icon: const Icon(Icons.edit),
                               onPressed: () =>
                                   context.push('/projects/${p.id}/edit'),
                             ),
                           IconButton(
+                            tooltip: 'Открыть карточку',
                             icon: const Icon(Icons.visibility),
                             onPressed: () => context.go('/projects/${p.id}'),
                           ),
@@ -383,15 +388,17 @@ class _ProjectCardList extends StatelessWidget {
                     onChanged: (_) => onToggle(p.id),
                   )
                 : null,
-            title: Text(p.title),
-            subtitle: Text('${p.code} · ${p.year} · ${p.goalAmount} ₽'),
+            title: Text(p.title, overflow: TextOverflow.ellipsis, maxLines: 2),
+            subtitle: Text(
+              '${p.code} · ${p.year} · ${p.goalAmount} ₽',
+              overflow: TextOverflow.ellipsis,
+            ),
             trailing: IconButton(
               icon: const Icon(Icons.chevron_right),
               onPressed: () => onOpen(p),
             ),
             onTap: () => onOpen(p),
-            onLongPress:
-                onDelete != null ? () => onDelete!(p) : null,
+            onLongPress: onDelete != null ? () => onDelete!(p) : null,
           ),
         );
       },
