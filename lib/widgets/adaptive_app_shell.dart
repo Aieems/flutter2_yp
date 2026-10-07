@@ -100,7 +100,11 @@ class AdaptiveAppShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthNotifier>();
-    final role = auth.user!.role;
+    final user = auth.user;
+    if (user == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    final role = user.role;
     final index = _selectedIndex(context, role);
     final paths = _navPaths(role);
     final useBottom = AppBreakpoints.useBottomNavigation(context);
@@ -119,7 +123,7 @@ class AdaptiveAppShell extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Center(
                 child: Text(
-                  '${auth.user!.displayName} · ${role.label}',
+                  '${user.displayName} · ${role.label}',
                   overflow: TextOverflow.ellipsis,
                 ),
               ),

@@ -44,12 +44,11 @@ class _CharityFundAppState extends State<CharityFundApp> {
   Future<void> _onInactivityTimeout(BuildContext context) async {
     final auth = context.read<AuthNotifier>();
     await auth.logout();
-    if (context.mounted) {
-      rootScaffoldMessengerKey.currentState?.showSnackBar(
-        const SnackBar(content: Text('Сессия завершена из‑за неактивности.')),
-      );
-      context.go('/login');
-    }
+    if (!mounted) return;
+    rootScaffoldMessengerKey.currentState?.showSnackBar(
+      const SnackBar(content: Text('Сессия завершена из‑за неактивности.')),
+    );
+    widget.router.go('/login');
   }
 
   @override
@@ -85,7 +84,6 @@ class _CharityFundAppState extends State<CharityFundApp> {
         warningBefore: const Duration(seconds: 30),
         onActivity: () {
           auth.touchActivity();
-          final router = GoRouter.of(context);
           auth.checkMaxSessionAndLogoutIfNeeded().then((loggedOut) {
             if (loggedOut && mounted) {
               rootScaffoldMessengerKey.currentState?.showSnackBar(
@@ -95,7 +93,7 @@ class _CharityFundAppState extends State<CharityFundApp> {
                   ),
                 ),
               );
-              router.go('/login');
+              widget.router.go('/login');
             }
           });
         },
