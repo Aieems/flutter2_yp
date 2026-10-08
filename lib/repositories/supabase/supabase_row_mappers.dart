@@ -1,3 +1,5 @@
+import '../../models/project.dart';
+
 Map<String, dynamic> projectRowToApi(Map<String, dynamic> row) => {
   'id': row['id'],
   'title': row['title'],
@@ -11,8 +13,6 @@ Map<String, dynamic> projectRowToApi(Map<String, dynamic> row) => {
   'volunteersActive': row['volunteers_active'],
   'deletedAt': row['deleted_at'],
 };
-
-import '../../models/project.dart';
 
 Map<String, dynamic> projectToRow(Project p) => {
   'title': p.title,

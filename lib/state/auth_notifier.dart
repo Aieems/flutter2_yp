@@ -68,8 +68,9 @@ class AuthNotifier extends ChangeNotifier {
       return;
     }
     try {
-      if (_supabaseAuth != null && refresh != null) {
-        await _supabaseAuth!.restoreSession(access, refresh);
+      final supaRestore = _supabaseAuth;
+      if (supaRestore != null && refresh != null && access != null) {
+        await supaRestore.restoreSession(access, refresh);
       }
       _user = await _me();
       _accessToken = _supabaseAuth?.currentAccessToken ?? _accessToken;

@@ -102,38 +102,14 @@ class SupabaseProjectRepository implements ProjectRepository {
 
   @override
   Future<Project> create(Project project) => guardSupabase(() async {
-        final body = projectToRow(
-          ProjectLike(
-            title: project.title,
-            code: project.code,
-            year: project.year,
-            goalAmount: project.goalAmount,
-            categoryId: project.categoryId,
-            partnerIds: project.partnerIds,
-            tagIds: project.tagIds,
-            volunteersTotal: project.volunteersTotal,
-            volunteersActive: project.volunteersActive,
-          ),
-        );
+        final body = projectToRow(project);
         final row = await _db.from('projects').insert(body).select().single();
         return projectFromApi(projectRowToApi(Map<String, dynamic>.from(row)));
       });
 
   @override
   Future<Project> update(Project project) => guardSupabase(() async {
-        final body = projectToRow(
-          ProjectLike(
-            title: project.title,
-            code: project.code,
-            year: project.year,
-            goalAmount: project.goalAmount,
-            categoryId: project.categoryId,
-            partnerIds: project.partnerIds,
-            tagIds: project.tagIds,
-            volunteersTotal: project.volunteersTotal,
-            volunteersActive: project.volunteersActive,
-          ),
-        );
+        final body = projectToRow(project);
         final row = await _db
             .from('projects')
             .update(body)
