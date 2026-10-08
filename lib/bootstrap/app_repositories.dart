@@ -6,6 +6,11 @@ import '../repositories/api/api_partner_repository.dart';
 import '../repositories/api/api_project_repository.dart';
 import '../repositories/api/api_tag_repository.dart';
 import '../repositories/api/api_volunteer_repository.dart';
+import '../repositories/supabase/supabase_category_repository.dart';
+import '../repositories/supabase/supabase_partner_repository.dart';
+import '../repositories/supabase/supabase_project_repository.dart';
+import '../repositories/supabase/supabase_tag_repository.dart';
+import '../repositories/supabase/supabase_volunteer_repository.dart';
 import '../repositories/category_repository.dart';
 import '../repositories/partner_repository.dart';
 import '../repositories/persistent_category_repository.dart';
@@ -71,6 +76,21 @@ class AppRepositories {
     final categories = ApiCategoryRepository(dio, projects);
     final tags = ApiTagRepository(dio);
     final volunteers = ApiVolunteerRepository(dio);
+    return AppRepositories(
+      projects: projects,
+      partners: partners,
+      categories: categories,
+      tags: tags,
+      volunteers: volunteers,
+    );
+  }
+
+  factory AppRepositories.createSupabase() {
+    final projects = SupabaseProjectRepository();
+    final partners = SupabasePartnerRepository();
+    final categories = SupabaseCategoryRepository(projects);
+    final tags = SupabaseTagRepository();
+    final volunteers = SupabaseVolunteerRepository();
     return AppRepositories(
       projects: projects,
       partners: partners,

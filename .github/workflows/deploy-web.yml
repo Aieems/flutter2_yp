@@ -35,10 +35,22 @@ jobs:
         run: flutter test
 
       - name: Build release (GitHub Pages subpath)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          # Без публичного бэкенда: данные и вход в браузере (SharedPreferences + LocalAuthApi).
-          flutter build web --release --base-href /flutter2_yp/ \
-            --dart-define=USE_API=false
+          set -e
+          BASE="flutter build web --release --base-href /flutter2_yp/"
+          if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_ANON_KEY" ]; then
+            echo "Сборка с Supabase (ключи из GitHub Secrets)"
+            $BASE \
+              --dart-define=USE_SUPABASE=true \
+              --dart-define=SUPABASE_URL="$SUPABASE_URL" \
+              --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
+          else
+            echo "Secrets Supabase не заданы — локальный режим USE_API=false"
+            $BASE --dart-define=USE_API=false
+          fi
 
       - name: SPA fallback for GitHub Pages
         run: cp build/web/index.html build/web/404.html

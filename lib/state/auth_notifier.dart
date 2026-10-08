@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../core/api_exceptions.dart';
 import '../core/auth_api.dart';
 import '../core/local_auth_api.dart';
+import '../core/supabase_auth_api.dart';
 import '../models/app_role.dart';
 import '../models/app_user.dart';
 
@@ -21,13 +22,16 @@ class AuthNotifier extends ChangeNotifier {
   AuthNotifier({
     required SharedPreferences prefs,
     AuthApi? authApi,
+    SupabaseAuthApi? supabaseAuth,
     LocalAuthApi? localAuthApi,
   }) : _prefs = prefs,
        _authApi = authApi,
+       _supabaseAuth = supabaseAuth,
        _localAuthApi = localAuthApi ?? LocalAuthApi();
 
   final SharedPreferences _prefs;
   final AuthApi? _authApi;
+  final SupabaseAuthApi? _supabaseAuth;
   final LocalAuthApi _localAuthApi;
 
   AppUser? _user;
@@ -64,7 +68,11 @@ class AuthNotifier extends ChangeNotifier {
       return;
     }
     try {
+      if (_supabaseAuth != null && refresh != null) {
+        await _supabaseAuth!.restoreSession(access, refresh);
+      }
       _user = await _me();
+      _accessToken = _supabaseAuth?.currentAccessToken ?? _accessToken;
       await _loadUiProfile();
       if (_uiUser == null && _user != null) {
         await _saveUiProfile(_user!);
@@ -87,11 +95,16 @@ class AuthNotifier extends ChangeNotifier {
   }
 
   Future<void> login(String username, String password) async {
-    final api = _authApi;
-    final result = api != null
-        ? await api.login(username, password)
-        : await _localAuthApi.login(username, password);
+    final result = await _loginBackend(username, password);
     await _applyTokens(result);
+  }
+
+  Future<AuthTokens> _loginBackend(String username, String password) async {
+    final supa = _supabaseAuth;
+    if (supa != null) return supa.login(username, password);
+    final api = _authApi;
+    if (api != null) return api.login(username, password);
+    return _localAuthApi.login(username, password);
   }
 
   Future<void> register({
@@ -99,22 +112,33 @@ class AuthNotifier extends ChangeNotifier {
     required String password,
     required String displayName,
   }) async {
-    final api = _authApi;
-    final result = api != null
-        ? await api.register(
-            username: username,
-            password: password,
-            displayName: displayName,
-          )
-        : await _localAuthApi.register(
-            username: username,
-            password: password,
-            displayName: displayName,
-          );
+    final supa = _supabaseAuth;
+    final AuthTokens result;
+    if (supa != null) {
+      result = await supa.register(
+        username: username,
+        password: password,
+        displayName: displayName,
+      );
+    } else {
+      final api = _authApi;
+      result = api != null
+          ? await api.register(
+              username: username,
+              password: password,
+              displayName: displayName,
+            )
+          : await _localAuthApi.register(
+              username: username,
+              password: password,
+              displayName: displayName,
+            );
+    }
     await _applyTokens(result);
   }
 
   Future<void> logout() async {
+    await _supabaseAuth?.signOut();
     _user = null;
     _uiUser = null;
     _accessToken = null;
@@ -167,18 +191,24 @@ class AuthNotifier extends ChangeNotifier {
   }
 
   Future<void> _refreshWith(String refreshToken) async {
-    final api = _authApi;
-    final result = api != null
-        ? await api.refresh(refreshToken)
-        : await _localAuthApi.refresh(refreshToken);
+    final supa = _supabaseAuth;
+    final AuthTokens result;
+    if (supa != null) {
+      result = await supa.refresh(refreshToken);
+    } else {
+      final api = _authApi;
+      result = api != null
+          ? await api.refresh(refreshToken)
+          : await _localAuthApi.refresh(refreshToken);
+    }
     await _applyTokens(result);
   }
 
   Future<AppUser> _me() async {
+    final supa = _supabaseAuth;
+    if (supa != null) return supa.me();
     final api = _authApi;
-    if (api != null) {
-      return api.me();
-    }
+    if (api != null) return api.me();
     return _localAuthApi.meFromAccessToken(_accessToken);
   }
 
@@ -201,6 +231,8 @@ class AuthNotifier extends ChangeNotifier {
   AuthApi? get authApi => _authApi;
 
   Future<List<AppUser>> listUsers() async {
+    final supa = _supabaseAuth;
+    if (supa != null) return supa.listUsers();
     final api = _authApi;
     if (api != null) return api.listUsers();
     return _localAuthApi.listUsers();
@@ -208,13 +240,22 @@ class AuthNotifier extends ChangeNotifier {
 
   Future<AppUser> updateUserRole(int id, AppRole role) async {
     final api = _authApi;
-    if (api != null) {
-      return api.updateUserRole(id, role.apiValue);
-    }
+    if (api != null) return api.updateUserRole(id, role.apiValue);
     return _localAuthApi.updateUserRole(id, role.apiValue);
   }
 
+  Future<AppUser> updateUserRoleFor(AppUser target, AppRole role) async {
+    final authId = target.authUserId;
+    final supa = _supabaseAuth;
+    if (supa != null && authId != null) {
+      return supa.updateUserRole(authId, role.apiValue);
+    }
+    return updateUserRole(target.id, role);
+  }
+
   Future<Map<String, int>> fetchStats() async {
+    final supa = _supabaseAuth;
+    if (supa != null) return supa.stats();
     final api = _authApi;
     if (api != null) return api.stats();
     return _localAuthApi.stats();
@@ -229,6 +270,7 @@ class AuthNotifier extends ChangeNotifier {
         'username': user.username,
         'displayName': user.displayName,
         'role': user.role.apiValue,
+        if (user.authUserId != null) 'authUserId': user.authUserId,
       }),
     );
   }

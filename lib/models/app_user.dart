@@ -6,12 +6,16 @@ class AppUser {
     required this.username,
     required this.displayName,
     required this.role,
+    this.authUserId,
   });
 
   final int id;
   final String username;
   final String displayName;
   final AppRole role;
+
+  /// UUID в Supabase Auth / profiles (для смены роли админом).
+  final String? authUserId;
 
   factory AppUser.fromJson(Map<String, dynamic> json) {
     return AppUser(
@@ -20,6 +24,7 @@ class AppUser {
       displayName:
           (json['displayName'] as String?) ?? json['username'] as String,
       role: AppRole.fromApi(json['role'] as String?),
+      authUserId: json['authUserId'] as String?,
     );
   }
 }

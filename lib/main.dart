@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
 import 'bootstrap/app_repositories.dart';
@@ -10,6 +11,7 @@ import 'core/api_client.dart';
 import 'core/auth_api.dart';
 import 'core/auth_refresh_interceptor.dart';
 import 'core/config.dart';
+import 'core/supabase_auth_api.dart';
 import 'repositories/category_repository.dart';
 import 'repositories/partner_repository.dart';
 import 'repositories/project_repository.dart';
@@ -26,20 +28,43 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   usePathUrlStrategy();
 
+  if (useSupabaseBackend) {
+    if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
+      throw StateError(
+        'Задайте SUPABASE_URL и SUPABASE_ANON_KEY (--dart-define).',
+      );
+    }
+    await Supabase.initialize(
+      url: supabaseUrl,
+      anonKey: supabaseAnonKey,
+    );
+  }
+
   final prefs = await SharedPreferences.getInstance();
   final storageMessages = StorageMessageNotifier();
 
   late final AuthNotifier auth;
-  final dio = buildDio(tokenProvider: () => auth.accessToken);
-  auth = AuthNotifier(
-    prefs: prefs,
-    authApi: useApiRepositories ? AuthApi(dio) : null,
-  );
-  dio.interceptors.add(AuthRefreshInterceptor(auth: auth, dio: dio));
+  final SupabaseAuthApi? supabaseAuth;
+  Dio? dio;
+
+  if (useSupabaseBackend) {
+    supabaseAuth = SupabaseAuthApi();
+    auth = AuthNotifier(prefs: prefs, supabaseAuth: supabaseAuth);
+  } else {
+    dio = buildDio(tokenProvider: () => auth.accessToken);
+    auth = AuthNotifier(
+      prefs: prefs,
+      authApi: useApiRepositories ? AuthApi(dio) : null,
+    );
+    dio.interceptors.add(AuthRefreshInterceptor(auth: auth, dio: dio));
+    supabaseAuth = null;
+  }
 
   final AppRepositories repos;
-  if (useApiRepositories) {
-    repos = AppRepositories.createApi(dio);
+  if (useSupabaseBackend) {
+    repos = AppRepositories.createSupabase();
+  } else if (useApiRepositories) {
+    repos = AppRepositories.createApi(dio!);
   } else {
     repos = await AppRepositories.create(
       prefs,
@@ -59,7 +84,7 @@ Future<void> main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: auth),
-        if (useApiRepositories) Provider<Dio>.value(value: dio),
+        if (dio != null) Provider<Dio>.value(value: dio),
         Provider<ProjectRepository>.value(value: repos.projects),
         Provider<PartnerRepository>.value(value: repos.partners),
         Provider<CategoryRepository>.value(value: repos.categories),
